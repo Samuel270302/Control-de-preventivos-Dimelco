@@ -7,3 +7,4 @@ release/
 __pycache__/
 tests/fixtures/
 capturas/
+DATOS_CONEXION.txt
