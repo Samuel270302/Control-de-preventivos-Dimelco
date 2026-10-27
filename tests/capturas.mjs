@@ -31,6 +31,7 @@ const datos = Object.fromEntries(
   [
     "v_control_pm", "v_control_40", "equipos", "componentes", "planes_mp",
     "cambios_horometro", "v_lecturas", "registros_pm", "parametros", "perfiles",
+    "columnas_control",
   ].map((n) => [n, fixture(n)])
 );
 

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { supabase } from "./supabase";
 import type {
   CambioHorometro,
+  ColumnaControl,
   Componente,
   ControlFila,
   Equipo,
@@ -48,6 +49,12 @@ export const useCambios = () =>
   useQuery({
     queryKey: ["cambios_horometro"],
     queryFn: () => todo<CambioHorometro>("cambios_horometro", "vigente_desde"),
+  });
+
+export const useColumnas = () =>
+  useQuery({
+    queryKey: ["columnas_control"],
+    queryFn: () => todo<ColumnaControl>("columnas_control", "orden"),
   });
 
 export const usePerfiles = () =>
@@ -108,6 +115,7 @@ const TABLAS = [
   "parametros",
   "registros_manuales",
   "perfiles",
+  "columnas_control",
 ];
 
 export function useTiempoReal() {

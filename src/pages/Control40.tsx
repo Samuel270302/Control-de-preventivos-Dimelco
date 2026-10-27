@@ -18,8 +18,7 @@ export default function Control40() {
       </p>
       <ControlTabla
         filas={filas}
-        titulo="Control MP 40h"
-        conSecciones={false}
+        titulo="Control de preventivos · Rutina de percusión 40 h"
         archivo={`Control 40h ${hoyISO()}.xlsx`}
       />
     </>

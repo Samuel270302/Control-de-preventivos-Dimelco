@@ -160,7 +160,7 @@ def main():
                values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) returning id""",
             (equipos[a], tipo, nombre, sistema, seccion, cod_sap,
              str(clave).strip(), (a, tipo) in rutina40,
-             a == "Scooptram #4" and tipo == "Diesel",
+             False,  # el ST #4 captura la lectura del contador como el resto
              estado is not None and str(estado).strip() != ""))
         componentes[(a, tipo)] = cur.fetchone()[0]
         n += 1

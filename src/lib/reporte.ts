@@ -1,7 +1,7 @@
 // Reporte semanal imprimible: se abre en una ventana aparte y se manda a
 // imprimir (en Windows, "Microsoft Print to PDF" lo guarda como PDF).
 import type { ControlFila } from "./types";
-import { fFecha, fNum, hoyISO } from "./fmt";
+import { fFecha, fNum, gamaTexto, hoyISO } from "./fmt";
 
 const ORDEN_ESTADOS = [
   "🔴 Vencido",
@@ -25,7 +25,7 @@ function tabla(filas: ControlFila[]) {
     .map(
       (f) => `<tr>
         <td>${f.cod_interno}</td><td>${f.nombre}</td>
-        <td class="n">${typeof f.proxima_gama === "number" ? fNum(f.proxima_gama) : (f.proxima_gama ?? "")}</td>
+        <td class="n">${gamaTexto(f.proxima_gama)}</td>
         <td class="n">${fNum(f.meta_acum)}</td>
         <td class="n">${fNum(f.ultima_lectura_acum)}</td>
         <td class="n">${fNum(f.hrs_faltantes)}</td>

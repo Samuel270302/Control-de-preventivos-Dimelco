@@ -12,11 +12,6 @@ import { validarLectura, type ParamsValidacion } from "../lib/validacion";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
 import type { Componente, LecturaCalc, Turno } from "../lib/types";
 
-interface Captura {
-  valor: string; // lectura del contador (o final de turno en modo manual)
-  inicio?: string; // solo modo manual
-}
-
 export default function Lecturas() {
   const { session } = useAuth();
   const qc = useQueryClient();
@@ -27,7 +22,7 @@ export default function Lecturas() {
 
   const [fecha, setFecha] = useState(hoyISO());
   const [turno, setTurno] = useState<Turno>("Dia");
-  const [capturas, setCapturas] = useState<Record<string, Captura>>({});
+  const [capturas, setCapturas] = useState<Record<string, string>>({});
   const [mensaje, setMensaje] = useState("");
 
   const p: ParamsValidacion = useMemo(() => {
@@ -66,68 +61,38 @@ export default function Lecturas() {
     return porComponente.get(c.id)?.[0];
   }
 
-  function validar(c: Componente, texto: Captura) {
-    const lect = lecturaFinal(c, texto);
-    if (lect === null) return null;
+  function validar(c: Componente, texto: string) {
+    const lect = parseFloat(texto);
+    if (isNaN(lect)) return null;
     return validarLectura(fecha, turno, lect, porComponente.get(c.id) ?? [], p);
-  }
-
-  // En modo manual (Scooptram #4) se digitan inicio y final del turno;
-  // la lectura acumulada se reconstruye: última lectura + (final − inicio).
-  function lecturaFinal(c: Componente, cap: Captura): number | null {
-    const v = parseFloat(cap.valor);
-    if (isNaN(v)) return null;
-    if (!c.lectura_manual) return v;
-    const ini = parseFloat(cap.inicio ?? "");
-    if (isNaN(ini) || v < ini) return null;
-    const prev = ultima(c);
-    return (prev?.lectura ?? ini) + (v - ini);
   }
 
   const grabar = useMutation({
     mutationFn: async () => {
-      const inserciones: {
-        comp: Componente;
-        lectura: number;
-        cap: Captura;
-      }[] = [];
+      const inserciones: { comp: Componente; lectura: number }[] = [];
       for (const { comp } of filas) {
-        const cap = capturas[comp.id];
-        if (!cap || cap.valor.trim() === "") continue;
-        const lect = lecturaFinal(comp, cap);
-        if (lect === null) throw new Error(`Lectura inválida en ${comp.nombre}`);
-        const res = validar(comp, cap);
+        const texto = capturas[comp.id];
+        if (!texto || texto.trim() === "") continue;
+        const lect = parseFloat(texto);
+        if (isNaN(lect)) throw new Error(`Lectura inválida en ${comp.nombre}`);
+        const res = validar(comp, texto);
         if (res?.nivel === "error") throw new Error(`${comp.nombre}: ${res.control}`);
-        inserciones.push({ comp, lectura: lect, cap });
+        inserciones.push({ comp, lectura: lect });
       }
       if (inserciones.length === 0) throw new Error("No hay lecturas para grabar");
-      for (const ins of inserciones) {
-        const { data, error } = await supabase()
-          .from("lecturas")
-          .insert({
+      const { error } = await supabase()
+        .from("lecturas")
+        .insert(
+          inserciones.map((ins) => ({
             componente_id: ins.comp.id,
             fecha,
             turno,
             lectura: ins.lectura,
-            origen: ins.comp.lectura_manual ? "manual" : "app",
+            origen: "app",
             creado_por: session?.user.id,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
-        if (ins.comp.lectura_manual) {
-          const { error: e2 } = await supabase().from("registros_manuales").insert({
-            componente_id: ins.comp.id,
-            fecha,
-            turno,
-            lectura_inicio: parseFloat(ins.cap.inicio!),
-            lectura_final: parseFloat(ins.cap.valor),
-            lectura_id: data.id,
-            creado_por: session?.user.id,
-          });
-          if (e2) throw e2;
-        }
-      }
+          }))
+        );
+      if (error) throw error;
       return inserciones.length;
     },
     onSuccess: (n) => {
@@ -186,48 +151,20 @@ export default function Lecturas() {
           <tbody>
             {filas.map(({ comp, equipo }) => {
               const u = ultima(comp);
-              const cap = capturas[comp.id] ?? { valor: "" };
-              const res = cap.valor.trim() !== "" ? validar(comp, cap) : null;
+              const texto = capturas[comp.id] ?? "";
+              const res = texto.trim() !== "" ? validar(comp, texto) : null;
               return (
                 <tr key={comp.id}>
                   <td>{equipo}</td>
-                  <td>
-                    {comp.tipo_horometro}
-                    {comp.lectura_manual && (
-                      <span className="nota"> · manual (inicio / final)</span>
-                    )}
-                  </td>
+                  <td>{comp.tipo_horometro}</td>
                   <td className="num">{u ? fNum(u.lectura) : "—sin lecturas—"}</td>
                   <td>{u ? `${fFecha(u.fecha)} ${u.turno}` : ""}</td>
                   <td className="num">
-                    {comp.lectura_manual ? (
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <input
-                          style={{ width: 70 }}
-                          placeholder="inicio"
-                          value={cap.inicio ?? ""}
-                          onChange={(e) =>
-                            setCapturas({ ...capturas, [comp.id]: { ...cap, inicio: e.target.value } })
-                          }
-                        />
-                        <input
-                          style={{ width: 70 }}
-                          placeholder="final"
-                          value={cap.valor}
-                          onChange={(e) =>
-                            setCapturas({ ...capturas, [comp.id]: { ...cap, valor: e.target.value } })
-                          }
-                        />
-                      </div>
-                    ) : (
-                      <input
-                        style={{ width: 110, textAlign: "right" }}
-                        value={cap.valor}
-                        onChange={(e) =>
-                          setCapturas({ ...capturas, [comp.id]: { valor: e.target.value } })
-                        }
-                      />
-                    )}
+                    <input
+                      style={{ width: 110, textAlign: "right" }}
+                      value={texto}
+                      onChange={(e) => setCapturas({ ...capturas, [comp.id]: e.target.value })}
+                    />
                   </td>
                   <td>
                     {res && (

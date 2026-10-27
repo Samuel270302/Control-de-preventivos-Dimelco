@@ -22,6 +22,7 @@ CONSULTAS = {
     "v_lecturas": "select * from v_lecturas order by num_turno desc limit 1500",
     "registros_pm": "select * from registros_pm where not anulado order by fecha desc limit 300",
     "parametros": "select * from parametros",
+    "columnas_control": "select * from columnas_control order by orden",
 }
 
 

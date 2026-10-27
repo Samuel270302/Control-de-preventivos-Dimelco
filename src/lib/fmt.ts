@@ -12,6 +12,12 @@ export function fNum(v: number | null | undefined, dec = 1): string {
   });
 }
 
+export function gamaTexto(v: string | number | null | undefined): string {
+  if (v === null || v === undefined) return "";
+  const n = Number(v);
+  return isFinite(n) ? fNum(n) : String(v);
+}
+
 export function hoyISO(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");

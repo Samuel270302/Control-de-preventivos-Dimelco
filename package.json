@@ -1,7 +1,7 @@
 {
   "name": "preventivos-hemco",
   "productName": "Preventivos HEMCO",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Control de mantenimiento preventivo por horómetros",
   "private": true,
   "main": "dist-electron/main.js",

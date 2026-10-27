@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import type { ControlFila, LecturaCalc, RegistroPm } from "./types";
-import { fFecha } from "./fmt";
+import { fFecha, gamaTexto } from "./fmt";
 
 function descargar(buf: ArrayBuffer, nombre: string) {
   const blob = new Blob([buf], {
@@ -59,7 +59,7 @@ export async function exportarControl(
       fFecha(f.fecha_ultimo_pm),
       f.gama_ultimo_pm ?? (f.fecha_ultimo_pm ? "Sin gama" : ""),
       f.horometro_ultimo_pm,
-      f.proxima_gama,
+      gamaTexto(f.proxima_gama),
       f.meta_acum,
       f.meta_contador,
       f.ultima_lectura_acum,

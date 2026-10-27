@@ -117,6 +117,13 @@ export interface ControlFila {
   observacion: string;
 }
 
+export interface ColumnaControl {
+  columna: string;
+  etiqueta: string;
+  visible: boolean;
+  orden: number;
+}
+
 export interface Perfil {
   user_id: string;
   nombre: string;
