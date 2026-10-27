@@ -19,6 +19,7 @@ const GRUPOS: [string, string[], string][] = [
 type Render = (f: ControlFila) => React.ReactNode;
 
 const CELDAS: Record<string, { num: boolean; render: Render }> = {
+  nombre: { num: false, render: (f) => f.nombre },
   cod_sap: { num: false, render: (f) => f.cod_sap ?? "Sin SAP" },
   modelo: { num: false, render: (f) => f.modelo },
   fecha_ultimo_pm: { num: false, render: (f) => fFecha(f.fecha_ultimo_pm) },
@@ -134,7 +135,6 @@ export default function ControlTabla({
           <thead>
             <tr>
               <th>Equipo</th>
-              <th>Componente</th>
               {colsActivas.map((c) => (
                 <th key={c.columna} className={CELDAS[c.columna].num ? "num" : ""}>
                   {c.etiqueta}
@@ -146,7 +146,6 @@ export default function ControlTabla({
             {visibles.map((f) => (
               <tr key={f.componente_id}>
                 <td>{f.cod_interno}</td>
-                <td>{f.nombre}</td>
                 {colsActivas.map((c) => (
                   <td key={c.columna} className={CELDAS[c.columna].num ? "num" : ""}>
                     {CELDAS[c.columna].render(f)}
@@ -157,7 +156,7 @@ export default function ControlTabla({
             {visibles.length === 0 && (
               <tr>
                 <td
-                  colSpan={colsActivas.length + 2}
+                  colSpan={colsActivas.length + 1}
                   style={{ textAlign: "center", color: "var(--texto-suave)" }}
                 >
                   Sin filas para el filtro actual
@@ -194,8 +193,7 @@ function ColumnasDialog({
     <dialog ref={dialogoRef}>
       <h1 style={{ fontSize: 16 }}>Columnas visibles</h1>
       <p className="nota">
-        Aplica a todos los usuarios, en Control PM y Rutina 40 h. Equipo y Componente siempre se
-        muestran.
+        Aplica a todos los usuarios, en Control PM y Rutina 40 h. Equipo siempre se muestra.
       </p>
       <div className="lista-columnas">
         {columnas
