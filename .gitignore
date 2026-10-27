@@ -1,0 +1,7 @@
+node_modules/
+dist/
+release/
+*.local
+.env
+.env.*
+__pycache__/
