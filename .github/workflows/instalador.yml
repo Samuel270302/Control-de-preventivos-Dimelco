@@ -3,7 +3,10 @@ name: Instalador de Windows
 on:
   workflow_dispatch:
   push:
-    tags: ["v*"]
+    branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
   construir:
@@ -15,12 +18,17 @@ jobs:
           node-version: 22
       - run: npm ci
       - run: npm run dist
+      - name: Leer versión
+        id: ver
+        shell: bash
+        run: echo "v=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: instalador-windows
           path: release/*.exe
-      - name: Publicar release (solo con etiqueta v*)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publicar release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.ver.outputs.v }}
+          name: Preventivos HEMCO v${{ steps.ver.outputs.v }}
           files: release/*.exe
