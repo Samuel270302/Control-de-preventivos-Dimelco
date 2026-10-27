@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && esbuild electron/main.ts electron/preload.ts --bundle --platform=node --external:electron --outdir=dist-electron",
     "app": "npm run build && electron .",
-    "dist": "npm run build && electron-builder --win nsis"
+    "dist": "npm run build && electron-builder --win nsis --publish never"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
