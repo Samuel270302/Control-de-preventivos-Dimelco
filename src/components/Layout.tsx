@@ -12,6 +12,7 @@ import {
   IconoTemporizador,
   IconoUsuarios,
 } from "./Iconos";
+import logoClaro from "../assets/logo-dimelco-claro.png";
 
 const enlaces = [
   { a: "/control", texto: "Control PM", icono: <IconoTablero />, captura: false },
@@ -36,6 +37,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="app">
       <aside className="menu">
         <div className="logo">
+          <img className="logo-marca" src={logoClaro} alt="Dimelco" />
           <span className="logo-titulo">Preventivos</span>
           <span className="logo-sub">HEMCO · mantenimiento</span>
         </div>

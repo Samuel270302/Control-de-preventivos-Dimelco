@@ -41,6 +41,8 @@ body {
   flex-shrink: 0;
 }
 .logo { padding: 18px 16px 14px; border-bottom: 1px solid #3a3a3a; }
+.logo-marca { display: block; width: 140px; height: auto; margin-bottom: 12px; }
+.logo-login { display: block; width: 155px; height: auto; margin: 0 auto 14px; }
 .logo-titulo { display: block; font-size: 17px; font-weight: 600; color: var(--ambar); }
 .logo-sub { display: block; font-size: 11px; color: #b8b8b8; margin-top: 2px; }
 .menu nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
