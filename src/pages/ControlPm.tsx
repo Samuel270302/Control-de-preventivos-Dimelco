@@ -3,11 +3,12 @@ import { useControl40, useControlPm } from "../lib/queries";
 import { hoyISO, fFecha } from "../lib/fmt";
 import { reporteSemanal } from "../lib/reporte";
 import ControlTabla from "../components/ControlTabla";
+import { IconoCompresor, IconoDiesel, IconoPerforadora } from "../components/Iconos";
 
-const SISTEMAS: { seccion: number; pestania: string; titulo: string }[] = [
-  { seccion: 1, pestania: "Motor diésel", titulo: "Control de preventivos · Motor diésel" },
-  { seccion: 2, pestania: "Compresor", titulo: "Control de preventivos · Compresor (horómetro motor eléctrico)" },
-  { seccion: 3, pestania: "Perforadoras y empernadoras", titulo: "Control de preventivos · Perforadoras y empernadoras, MP mayor" },
+const SISTEMAS: { seccion: number; pestania: string; titulo: string; icono: React.ReactNode }[] = [
+  { seccion: 1, pestania: "Motor diésel", titulo: "Control de preventivos · Motor diésel", icono: <IconoDiesel /> },
+  { seccion: 2, pestania: "Compresor", titulo: "Control de preventivos · Compresor (horómetro motor eléctrico)", icono: <IconoCompresor /> },
+  { seccion: 3, pestania: "Perforadoras y empernadoras", titulo: "Control de preventivos · Perforadoras y empernadoras, MP mayor", icono: <IconoPerforadora /> },
 ];
 
 export default function ControlPm() {
@@ -40,6 +41,7 @@ export default function ControlPm() {
             className={`pestania ${s.seccion === seccion ? "activa" : ""}`}
             onClick={() => setSeccion(s.seccion)}
           >
+            {s.icono}
             {s.pestania}
           </button>
         ))}

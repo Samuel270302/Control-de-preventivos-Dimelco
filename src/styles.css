@@ -136,6 +136,9 @@ button:disabled { opacity: 0.5; cursor: default; }
 /* Pestañas por sistema */
 .pestanias { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 2px solid var(--oscuro); }
 .pestania {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--panel-2);
   color: var(--texto-suave);
   border: 1px solid var(--borde);
@@ -145,21 +148,33 @@ button:disabled { opacity: 0.5; cursor: default; }
   font-weight: 600;
   cursor: pointer;
 }
+.pestania svg { width: 18px; height: 18px; flex-shrink: 0; }
 .pestania.activa { background: var(--oscuro); color: var(--ambar); border-color: var(--oscuro); }
 
 /* Resumen de estados */
-.resumen { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
 .chip {
   background: var(--panel);
   border: 1px solid var(--borde);
+  border-top: 4px solid var(--gris-letra);
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 12px 16px;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
+.chip:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
 .chip.activo { outline: 2px solid var(--ambar); }
-.chip .n { font-size: 20px; font-weight: 700; display: block; }
-.chip .t { font-size: 11px; color: var(--texto-suave); }
+.chip .n { font-size: 28px; font-weight: 700; display: block; line-height: 1.1; }
+.chip .t { font-size: 12px; color: var(--texto-suave); }
+.chip.vencido { border-top-color: var(--rojo-letra); }
+.chip.programar { border-top-color: var(--ambar); }
+.chip.repuestos { border-top-color: #d6a400; }
+.chip.normal { border-top-color: var(--verde-letra); }
 .chip.vencido .n { color: var(--rojo-letra); }
 .chip.programar .n { color: #a37700; }
 .chip.repuestos .n { color: var(--amarillo-letra); }
