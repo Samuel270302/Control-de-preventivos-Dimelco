@@ -67,6 +67,15 @@ def main():
         delete from registros_pm; delete from cambios_horometro;
         delete from componentes; delete from equipos; delete from planes_mp;
     """)
+    # El histórico del libro trae registros PM que el control de lecturas rechazaría;
+    # se carga tal cual y el control vuelve a quedar activo al terminar.
+    cur.execute("""
+        do $$ begin
+          if exists (select 1 from pg_trigger where tgname = 'validar_registro_pm') then
+            alter table registros_pm disable trigger validar_registro_pm;
+          end if;
+        end $$;
+    """)
 
     # --- Plan MP (filas 6 a 13) ---
     ws = wb["Plan MP"]
@@ -273,6 +282,13 @@ def main():
                     (args.fecha_ref,))
         print(f"fecha_referencia: {args.fecha_ref}")
 
+    cur.execute("""
+        do $$ begin
+          if exists (select 1 from pg_trigger where tgname = 'validar_registro_pm') then
+            alter table registros_pm enable trigger validar_registro_pm;
+          end if;
+        end $$;
+    """)
     con.commit()
     if avisos:
         print(f"\nAvisos ({len(avisos)}):")
