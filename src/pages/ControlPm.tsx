@@ -2,13 +2,8 @@ import { useState } from "react";
 import { useControl40, useControlPm } from "../lib/queries";
 import { hoyISO, fFecha } from "../lib/fmt";
 import { reporteSemanal } from "../lib/reporte";
+import { PestaniasSistema, SISTEMAS } from "../lib/sistemas";
 import ControlTabla from "../components/ControlTabla";
-
-const SISTEMAS: { seccion: number; pestania: string; titulo: string }[] = [
-  { seccion: 1, pestania: "Motor diésel", titulo: "Control de preventivos · Motor diésel" },
-  { seccion: 2, pestania: "Compresor", titulo: "Control de preventivos · Compresor (horómetro motor eléctrico)" },
-  { seccion: 3, pestania: "Perforadoras y empernadoras", titulo: "Control de preventivos · Perforadoras y empernadoras, MP mayor" },
-];
 
 export default function ControlPm() {
   const { data, isLoading, error } = useControlPm();
@@ -33,20 +28,10 @@ export default function ControlPm() {
           Reporte semanal (PDF)
         </button>
       </div>
-      <div className="pestanias">
-        {SISTEMAS.map((s) => (
-          <button
-            key={s.seccion}
-            className={`pestania ${s.seccion === seccion ? "activa" : ""}`}
-            onClick={() => setSeccion(s.seccion)}
-          >
-            {s.pestania}
-          </button>
-        ))}
-      </div>
+      <PestaniasSistema seccion={seccion} onCambio={setSeccion} />
       <ControlTabla
         filas={filas}
-        titulo={sistema.titulo}
+        titulo={`Control de preventivos · ${sistema.titulo}`}
         archivo={`Control PM ${sistema.pestania} ${hoyISO()}.xlsx`}
       />
     </>

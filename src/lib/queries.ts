@@ -75,6 +75,25 @@ export function useLecturasRecientes(limite = 400) {
   });
 }
 
+export function useLecturasDesde(desde: string) {
+  return useQuery({
+    queryKey: ["v_lecturas_desde", desde],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from("v_lecturas")
+        .select("id,componente_id,fecha,turno,lectura,lectura_acum,num_turno")
+        .gte("fecha", desde)
+        .order("num_turno", { ascending: true })
+        .limit(5000);
+      if (error) throw error;
+      return data as Pick<
+        LecturaCalc,
+        "id" | "componente_id" | "fecha" | "turno" | "lectura" | "lectura_acum" | "num_turno"
+      >[];
+    },
+  });
+}
+
 export function useRegistrosPm(limite = 300) {
   return useQuery({
     queryKey: ["registros_pm", limite],

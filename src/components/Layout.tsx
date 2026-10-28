@@ -1,22 +1,36 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../auth";
 import { supabase } from "../lib/supabase";
+import {
+  IconoCalendario,
+  IconoCamion,
+  IconoGrafica,
+  IconoHistorial,
+  IconoLlave,
+  IconoPlanilla,
+  IconoReinicio,
+  IconoTablero,
+  IconoTemporizador,
+  IconoUsuarios,
+} from "./Iconos";
+import logoClaro from "../assets/logo-dimelco-claro.png";
 
 const enlaces = [
-  { a: "/control", texto: "Control PM", captura: false },
-  { a: "/rutina40", texto: "Rutina 40 h", captura: false },
-  { a: "/lecturas", texto: "Lecturas", captura: true },
-  { a: "/registro-pm", texto: "Registro PM", captura: true },
-  { a: "/cambios", texto: "Cambios horómetro", captura: true },
-  { a: "/historial", texto: "Historial", captura: false },
+  { a: "/control", texto: "Control PM", icono: <IconoTablero />, captura: false },
+  { a: "/rutina40", texto: "Rutina 40 h", icono: <IconoTemporizador />, captura: false },
+  { a: "/graficas", texto: "Gráficas", icono: <IconoGrafica />, captura: false },
+  { a: "/lecturas", texto: "Lecturas", icono: <IconoPlanilla />, captura: true },
+  { a: "/registro-pm", texto: "Registro PM", icono: <IconoLlave />, captura: true },
+  { a: "/cambios", texto: "Cambios horómetro", icono: <IconoReinicio />, captura: true },
+  { a: "/historial", texto: "Historial", icono: <IconoHistorial />, captura: false },
 ];
 
 const NOMBRE_ROL = { admin: "Administrador", capturador: "Capturador", invitado: "Invitado (solo consulta)" };
 
 const enlacesAdmin = [
-  { a: "/equipos", texto: "Equipos" },
-  { a: "/plan", texto: "Plan MP" },
-  { a: "/usuarios", texto: "Usuarios" },
+  { a: "/equipos", texto: "Equipos", icono: <IconoCamion /> },
+  { a: "/plan", texto: "Plan MP", icono: <IconoCalendario /> },
+  { a: "/usuarios", texto: "Usuarios", icono: <IconoUsuarios /> },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -25,12 +39,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="app">
       <aside className="menu">
         <div className="logo">
+          <img className="logo-marca" src={logoClaro} alt="Dimelco" />
           <span className="logo-titulo">Preventivos</span>
           <span className="logo-sub">HEMCO · mantenimiento</span>
         </div>
         <nav>
           {enlaces.filter((e) => puedeCapturar || !e.captura).map((e) => (
             <NavLink key={e.a} to={e.a} className={({ isActive }) => (isActive ? "activo" : "")}>
+              {e.icono}
               {e.texto}
             </NavLink>
           ))}
@@ -39,6 +55,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <div className="menu-seccion">Administración</div>
               {enlacesAdmin.map((e) => (
                 <NavLink key={e.a} to={e.a} className={({ isActive }) => (isActive ? "activo" : "")}>
+                  {e.icono}
                   {e.texto}
                 </NavLink>
               ))}

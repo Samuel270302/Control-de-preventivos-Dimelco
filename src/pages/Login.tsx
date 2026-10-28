@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { borrarConexion } from "../lib/config";
+import logo from "../assets/logo-dimelco.png";
 
 export default function Login() {
   const [correo, setCorreo] = useState("");
@@ -23,6 +24,7 @@ export default function Login() {
   return (
     <div className="pantalla-centro">
       <form className="tarjeta" onSubmit={entrar}>
+        <img className="logo-login" src={logo} alt="Dimelco" />
         <h1>Preventivos HEMCO</h1>
         <label className="campo">
           <span>Correo</span>
