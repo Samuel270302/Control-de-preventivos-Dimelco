@@ -6,6 +6,7 @@ import { useComponentes, useEquipos } from "../lib/queries";
 import { exportarLecturas, exportarRegistrosPm } from "../lib/exportar";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
 import type { LecturaCalc, RegistroPm } from "../lib/types";
+import { useDialogoMotivo } from "../components/DialogoMotivo";
 
 export default function Historial() {
   const { esAdmin } = useAuth();
@@ -74,30 +75,37 @@ export default function Historial() {
     },
   });
 
+  const { pedirMotivo, dialogo } = useDialogoMotivo();
+  const [aviso, setAviso] = useState("");
+
   const anularLectura = useMutation({
-    mutationFn: async (id: string) => {
-      const motivo = prompt("Motivo de la anulación:");
-      if (!motivo) throw new Error("cancelado");
+    mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
       const { error } = await supabase()
         .from("lecturas")
         .update({ anulada: true, motivo_anulacion: motivo })
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries(),
+    onSuccess: () => {
+      setAviso("Registro anulado");
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => setAviso(`No se pudo anular: ${e.message}`),
   });
 
   const anularPm = useMutation({
-    mutationFn: async (id: string) => {
-      const motivo = prompt("Motivo de la anulación del registro PM:");
-      if (!motivo) throw new Error("cancelado");
+    mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
       const { error } = await supabase()
         .from("registros_pm")
         .update({ anulado: true, motivo_anulacion: motivo })
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries(),
+    onSuccess: () => {
+      setAviso("Registro anulado");
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => setAviso(`No se pudo anular: ${e.message}`),
   });
 
   function decorarLectura(l: LecturaCalc) {
@@ -121,8 +129,10 @@ export default function Historial() {
 
   return (
     <>
+      {dialogo}
       <h1>Historial</h1>
       <p className="subtitulo">Lecturas de horómetro y mantenimientos ejecutados.</p>
+      {aviso && <p className="nota">{aviso}</p>}
       <div className="barra-acciones">
         <button
           className={pestania === "lecturas" ? "" : "boton-secundario"}
@@ -208,7 +218,16 @@ export default function Historial() {
                     </td>
                     {esAdmin && (
                       <td>
-                        <button className="boton-plano" onClick={() => anularLectura.mutate(l.id)}>
+                        <button
+                          className="boton-plano"
+                          onClick={async () => {
+                            const motivo = await pedirMotivo(
+                              "Anular lectura de horómetro",
+                              `${d.equipo} · ${d.tipo} · ${fFecha(l.fecha)} ${l.turno} · lectura ${fNum(l.lectura)} h`
+                            );
+                            if (motivo) anularLectura.mutate({ id: l.id, motivo });
+                          }}
+                        >
                           Anular
                         </button>
                       </td>
@@ -248,7 +267,16 @@ export default function Historial() {
                     <td>{r.responsable}</td>
                     {esAdmin && (
                       <td>
-                        <button className="boton-plano" onClick={() => anularPm.mutate(r.id)}>
+                        <button
+                          className="boton-plano"
+                          onClick={async () => {
+                            const motivo = await pedirMotivo(
+                              "Anular registro PM",
+                              `${d.equipo} · ${d.tipo} · ${fFecha(r.fecha)} · gama ${r.gama ?? "sin gama"} · lectura ${fNum(r.lectura)} h`
+                            );
+                            if (motivo) anularPm.mutate({ id: r.id, motivo });
+                          }}
+                        >
                           Anular
                         </button>
                       </td>

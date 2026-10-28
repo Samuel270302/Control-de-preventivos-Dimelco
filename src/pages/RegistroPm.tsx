@@ -10,6 +10,7 @@ import {
   useRegistrosPm,
 } from "../lib/queries";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
+import { useDialogoMotivo } from "../components/DialogoMotivo";
 
 interface Renglon {
   componenteId: string;
@@ -118,22 +119,26 @@ export default function RegistroPmPage() {
     onError: (e: Error) => setMensaje(e.message),
   });
 
+  const { pedirMotivo, dialogo } = useDialogoMotivo();
+
   const anular = useMutation({
-    mutationFn: async (id: string) => {
-      const motivo = prompt("Motivo de la anulación:");
-      if (!motivo) throw new Error("Anulación cancelada");
+    mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
       const { error } = await supabase()
         .from("registros_pm")
         .update({ anulado: true, motivo_anulacion: motivo })
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries(),
-    onError: (e: Error) => setMensaje(e.message),
+    onSuccess: () => {
+      setMensaje("Registro PM anulado");
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => setMensaje(`No se pudo anular: ${e.message}`),
   });
 
   return (
     <>
+      {dialogo}
       <h1>Registro de mantenimientos ejecutados</h1>
       <p className="subtitulo">
         La lectura es la del contador del componente intervenido al momento del PM. La gama 40 es
@@ -287,7 +292,16 @@ export default function RegistroPmPage() {
                   <td>{r.responsable}</td>
                   {esAdmin && (
                     <td>
-                      <button className="boton-plano" onClick={() => anular.mutate(r.id)}>
+                      <button
+                        className="boton-plano"
+                        onClick={async () => {
+                          const motivo = await pedirMotivo(
+                            "Anular registro PM",
+                            `${c ? nombreEq.get(c.equipo_id) : ""} · ${c?.nombre ?? ""} · ${fFecha(r.fecha)} · gama ${r.gama ?? "sin gama"} · lectura ${fNum(r.lectura)} h`
+                          );
+                          if (motivo) anular.mutate({ id: r.id, motivo });
+                        }}
+                      >
                         Anular
                       </button>
                     </td>
