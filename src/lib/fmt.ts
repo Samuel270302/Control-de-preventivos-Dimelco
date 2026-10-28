@@ -23,3 +23,10 @@ export function hoyISO(): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
+
+export function sumarDiasISO(iso: string, dias: number): string {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + dias);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}

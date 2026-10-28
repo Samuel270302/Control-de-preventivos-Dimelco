@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import {
   IconoCalendario,
   IconoCamion,
+  IconoGrafica,
   IconoHistorial,
   IconoLlave,
   IconoPlanilla,
@@ -17,6 +18,7 @@ import logoClaro from "../assets/logo-dimelco-claro.png";
 const enlaces = [
   { a: "/control", texto: "Control PM", icono: <IconoTablero />, captura: false },
   { a: "/rutina40", texto: "Rutina 40 h", icono: <IconoTemporizador />, captura: false },
+  { a: "/graficas", texto: "Gráficas", icono: <IconoGrafica />, captura: false },
   { a: "/lecturas", texto: "Lecturas", icono: <IconoPlanilla />, captura: true },
   { a: "/registro-pm", texto: "Registro PM", icono: <IconoLlave />, captura: true },
   { a: "/cambios", texto: "Cambios horómetro", icono: <IconoReinicio />, captura: true },

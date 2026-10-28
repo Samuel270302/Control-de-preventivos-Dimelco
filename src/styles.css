@@ -274,3 +274,67 @@ dialog::backdrop { background: rgba(28, 28, 28, 0.45); }
 .lista-columnas { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; margin: 10px 0 16px; }
 .lista-columnas label { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .lista-columnas input { width: auto; }
+
+/* Gráficas de evolución */
+.selector-vista { display: inline-flex; border: 1px solid var(--borde); border-radius: 7px; overflow: hidden; }
+.selector-vista button {
+  background: var(--panel);
+  color: var(--texto-suave);
+  border-radius: 0;
+  padding: 7px 16px;
+  font-weight: 600;
+}
+.selector-vista button.activo { background: var(--oscuro); color: var(--ambar); }
+.leyenda-grafica { display: inline-flex; align-items: center; gap: 6px; }
+.clave-linea { display: inline-block; width: 16px; height: 2px; background: #b07800; border-radius: 1px; }
+.clave-meta { display: inline-block; width: 16px; border-top: 1px dashed #9c0006; margin-left: 12px; }
+.rejilla-graficas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1250px) { .rejilla-graficas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tarjeta-grafica {
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 12px 14px 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+.tg-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.tg-equipo { font-weight: 700; font-size: 14px; color: var(--oscuro-2); }
+.tg-componente { font-size: 12px; color: var(--texto-suave); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+.tg-vacia {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gris-letra);
+  font-size: 13px;
+  background: var(--panel-2);
+  border-radius: 6px;
+}
+.tg-pie { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 6px; border-top: 1px solid #ececea; margin-top: 6px; padding-top: 8px; }
+.tg-dato { display: block; font-weight: 600; font-size: 13px; color: var(--texto); }
+.tg-etiqueta { display: block; font-size: 11px; color: var(--texto-suave); white-space: nowrap; }
+.grafica { position: relative; }
+.grafica svg { display: block; width: 100%; height: auto; touch-action: none; }
+.grafica-grilla { stroke: #ebebe8; stroke-width: 1; }
+.grafica-eje { fill: var(--texto-suave); font-size: 10px; font-variant-numeric: tabular-nums; }
+.grafica-meta { fill: var(--rojo-letra); font-size: 10px; font-weight: 600; paint-order: stroke; stroke: #ffffff; stroke-width: 3px; stroke-linejoin: round; }
+.grafica-cruz { stroke: #9a9a96; stroke-width: 1; }
+.grafica-tooltip {
+  position: absolute;
+  top: 6px;
+  pointer-events: none;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 6px 9px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  z-index: 2;
+}
+.tt-valor { font-weight: 700; font-size: 13px; color: var(--oscuro-2); }
+.tt-linea { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--texto-suave); }
+.tt-clave { display: inline-block; width: 12px; height: 2px; background: #b07800; }
+.tt-sub { font-size: 11px; color: var(--texto-suave); }
+.tg-superada { color: var(--rojo-letra); font-weight: 600; }
