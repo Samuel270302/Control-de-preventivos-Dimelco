@@ -13,7 +13,13 @@ Requisitos: Windows 10 u 11 con internet.
 
 admin: todo, incluido Plan MP, maestro de equipos, usuarios, validar offsets y anular registros.
 capturador: captura lecturas y PM y propone cambios de horómetro.
+invitado: solo consulta. Ve Control PM, Rutina 40 h e Historial, y puede exportar; no ve las pantallas de captura y la base rechaza cualquier escritura suya.
 
-## Respaldo
+## Respaldo y continuidad
 
-Los datos viven en Supabase (PostgreSQL en la nube). El plan gratuito no incluye respaldos automáticos; el plan Pro sí los hace a diario. Como respaldo manual, el administrador puede exportar el historial completo a Excel desde la app, o generar un volcado de la base con pg_dump.
+Los datos viven en Supabase (PostgreSQL en la nube, plan Free). El flujo de GitHub Actions "Mantenimiento de la base" (.github/workflows/mantenimiento.yml) hace dos cosas:
+
+1. Todos los días a las 11:43 UTC ejecuta una consulta real a la base, para que Supabase no pause el proyecto por inactividad (el plan Free pausa tras 7 días sin uso).
+2. Cada domingo genera un respaldo completo (tablas de la app y usuarios) y lo guarda en la rama "respaldos" del repositorio, en una carpeta por fecha. El README de esa rama explica cómo restaurar.
+
+El flujo necesita el secreto SUPABASE_DB_URL en Settings, Secrets and variables, Actions. Se puede lanzar a mano desde la pestaña Actions con "Run workflow"; una ejecución manual siempre incluye respaldo.

@@ -118,17 +118,27 @@ const TABLAS = [
   "columnas_control",
 ];
 
+// Una pasada de captura llega como un aviso por fila; se agrupan para
+// recargar una sola vez cuando dejan de llegar avisos.
+const ESPERA_RECARGA_MS = 1500;
+
 export function useTiempoReal() {
   const qc = useQueryClient();
   useEffect(() => {
+    let temporizador: ReturnType<typeof setTimeout> | null = null;
     const canal = supabase()
       .channel("cambios-db")
       .on("postgres_changes", { event: "*", schema: "public" }, (payload) => {
-        const t = payload.table;
-        if (TABLAS.includes(t)) qc.invalidateQueries();
+        if (!TABLAS.includes(payload.table)) return;
+        if (temporizador) clearTimeout(temporizador);
+        temporizador = setTimeout(() => {
+          temporizador = null;
+          qc.invalidateQueries();
+        }, ESPERA_RECARGA_MS);
       })
       .subscribe();
     return () => {
+      if (temporizador) clearTimeout(temporizador);
       void supabase().removeChannel(canal);
     };
   }, [qc]);

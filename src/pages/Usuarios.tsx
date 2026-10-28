@@ -69,6 +69,7 @@ export default function Usuarios() {
                   >
                     <option value="admin">Administrador</option>
                     <option value="capturador">Capturador</option>
+                    <option value="invitado">Invitado (solo consulta)</option>
                   </select>
                 </td>
                 <td>

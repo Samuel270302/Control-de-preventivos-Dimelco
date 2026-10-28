@@ -17,13 +17,13 @@ import PlanMpPage from "./pages/PlanMp";
 import Usuarios from "./pages/Usuarios";
 
 function Interior() {
-  const { session, cargando, esAdmin } = useAuth();
+  const { session, cargando, esAdmin, puedeCapturar } = useAuth();
   if (cargando) return <div className="pantalla-centro">Cargando…</div>;
   if (!session) return <Login />;
-  return <ConRealtime esAdmin={esAdmin} />;
+  return <ConRealtime esAdmin={esAdmin} puedeCapturar={puedeCapturar} />;
 }
 
-function ConRealtime({ esAdmin }: { esAdmin: boolean }) {
+function ConRealtime({ esAdmin, puedeCapturar }: { esAdmin: boolean; puedeCapturar: boolean }) {
   useTiempoReal();
   return (
     <Layout>
@@ -31,9 +31,9 @@ function ConRealtime({ esAdmin }: { esAdmin: boolean }) {
         <Route path="/" element={<Navigate to="/control" replace />} />
         <Route path="/control" element={<ControlPm />} />
         <Route path="/rutina40" element={<Control40 />} />
-        <Route path="/lecturas" element={<Lecturas />} />
-        <Route path="/registro-pm" element={<RegistroPmPage />} />
-        <Route path="/cambios" element={<Cambios />} />
+        {puedeCapturar && <Route path="/lecturas" element={<Lecturas />} />}
+        {puedeCapturar && <Route path="/registro-pm" element={<RegistroPmPage />} />}
+        {puedeCapturar && <Route path="/cambios" element={<Cambios />} />}
         <Route path="/historial" element={<Historial />} />
         {esAdmin && <Route path="/equipos" element={<Equipos />} />}
         {esAdmin && <Route path="/plan" element={<PlanMpPage />} />}

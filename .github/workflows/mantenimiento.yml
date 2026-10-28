@@ -1,0 +1,104 @@
+name: Mantenimiento de la base
+
+# Todos los días: una consulta real a la base para que Supabase (plan Free)
+# no pause el proyecto por inactividad.
+# Domingos: respaldo completo, guardado en la rama "respaldos" del repositorio.
+# Requiere el secreto SUPABASE_DB_URL (cadena de conexión del pooler en modo sesión, puerto 5432).
+
+on:
+  schedule:
+    - cron: "43 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mantenimiento-base
+  cancel-in-progress: false
+
+jobs:
+  mantener:
+    runs-on: ubuntu-latest
+    env:
+      DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: Verificar secreto
+        run: |
+          if [ -z "$DB_URL" ]; then
+            echo "::error::Falta el secreto SUPABASE_DB_URL en Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+
+      - name: Instalar cliente de PostgreSQL 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17 > /dev/null
+          /usr/lib/postgresql/17/bin/pg_dump --version
+
+      - name: Consulta diaria (evita la pausa por inactividad)
+        run: |
+          /usr/lib/postgresql/17/bin/psql "$DB_URL" -v ON_ERROR_STOP=1 -At -c \
+            "select 'lecturas=' || count(*) || ' ultima=' || coalesce(max(fecha)::text, '-') from lecturas"
+
+      - name: Decidir si hoy toca respaldo
+        id: dia
+        run: |
+          if [ "$(date -u +%u)" = "7" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "respaldar=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "respaldar=no" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Respaldo completo
+        if: steps.dia.outputs.respaldar == 'si'
+        run: |
+          FECHA=$(date -u +%Y-%m-%d)
+          mkdir -p salida
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --schema=public --no-owner --no-privileges \
+            | gzip -9 > "salida/${FECHA}_public.sql.gz"
+          /usr/lib/postgresql/17/bin/pg_dump "$DB_URL" --data-only --no-owner --no-privileges \
+            --table=auth.users --table=auth.identities \
+            | gzip -9 > "salida/${FECHA}_usuarios.sql.gz"
+          gzip -t salida/*.gz
+          ls -la salida
+
+      - name: Guardar respaldo en la rama "respaldos"
+        if: steps.dia.outputs.respaldar == 'si'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FECHA=$(date -u +%Y-%m-%d)
+          mkdir rama && cd rama
+          git init -q
+          git config user.name "respaldo-automatico"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git ls-remote --exit-code --heads origin respaldos > /dev/null; then
+            git fetch -q --depth=1 origin respaldos
+            git checkout -q -b respaldos FETCH_HEAD
+          else
+            git checkout -q --orphan respaldos
+            cat > README.md <<'EOF'
+          # Respaldos de la base de datos
+
+          Generados cada domingo por el flujo "Mantenimiento de la base".
+          Cada carpeta tiene dos archivos:
+          - AAAA-MM-DD_public.sql.gz: tablas de la app con estructura y datos.
+          - AAAA-MM-DD_usuarios.sql.gz: usuarios de inicio de sesión (auth.users y auth.identities).
+
+          Restaurar en un proyecto Supabase nuevo y vacío:
+          1. gunzip -c AAAA-MM-DD_usuarios.sql.gz | psql "<cadena de conexión>"
+          2. gunzip -c AAAA-MM-DD_public.sql.gz | psql "<cadena de conexión>"
+          3. Aplicar supabase/migrations/002_rls.sql y 004_columnas_rls.sql del repositorio (políticas y tiempo real).
+          EOF
+          fi
+          mkdir -p "$FECHA"
+          cp ../salida/* "$FECHA"/
+          git add -A
+          git commit -q -m "Respaldo $FECHA"
+          git push -q origin respaldos
+          echo "Respaldo $FECHA guardado"

@@ -8,3 +8,4 @@ __pycache__/
 tests/fixtures/
 capturas/
 DATOS_CONEXION.txt
+SECRETO_GITHUB.txt

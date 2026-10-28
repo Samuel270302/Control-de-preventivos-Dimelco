@@ -8,9 +8,16 @@ interface Auth {
   perfil: Perfil | null;
   cargando: boolean;
   esAdmin: boolean;
+  puedeCapturar: boolean;
 }
 
-const Ctx = createContext<Auth>({ session: null, perfil: null, cargando: true, esAdmin: false });
+const Ctx = createContext<Auth>({
+  session: null,
+  perfil: null,
+  cargando: true,
+  esAdmin: false,
+  puedeCapturar: false,
+});
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -42,7 +49,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ session, perfil, cargando, esAdmin: perfil?.rol === "admin" }}
+      value={{
+        session,
+        perfil,
+        cargando,
+        esAdmin: perfil?.rol === "admin",
+        puedeCapturar: perfil?.rol === "admin" || perfil?.rol === "capturador",
+      }}
     >
       {children}
     </Ctx.Provider>

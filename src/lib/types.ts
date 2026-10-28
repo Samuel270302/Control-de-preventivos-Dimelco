@@ -128,6 +128,6 @@ export interface Perfil {
   user_id: string;
   nombre: string;
   correo: string | null;
-  rol: "admin" | "capturador";
+  rol: "admin" | "capturador" | "invitado";
   activo: boolean;
 }
