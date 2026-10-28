@@ -338,3 +338,5 @@ dialog::backdrop { background: rgba(28, 28, 28, 0.45); }
 .tt-clave { display: inline-block; width: 12px; height: 2px; background: #b07800; }
 .tt-sub { font-size: 11px; color: var(--texto-suave); }
 .tg-superada { color: var(--rojo-letra); font-weight: 600; }
+.pm-ayuda { flex-basis: 100%; margin-top: -2px; }
+.pm-rechazo { font-size: 13px; font-weight: 600; margin-top: 4px; }

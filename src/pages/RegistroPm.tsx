@@ -1,8 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth";
-import { useComponentes, useEquipos, usePlanes, useRegistrosPm } from "../lib/queries";
+import {
+  useComponentes,
+  useEquipos,
+  useLecturasRecientes,
+  usePlanes,
+  useRegistrosPm,
+} from "../lib/queries";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
 
 interface Renglon {
@@ -28,6 +34,39 @@ export default function RegistroPmPage() {
   // se registra en renglones separados, cada uno con su lectura.
   const [renglones, setRenglones] = useState<Renglon[]>([{ ...RENGLON_VACIO }]);
   const [mensaje, setMensaje] = useState("");
+  const { data: lecturasRecientes } = useLecturasRecientes(1500);
+  // Resultado del control de la base por renglón: null = OK, texto = motivo del rechazo.
+  const [validaciones, setValidaciones] = useState<Record<number, string | null>>({});
+
+  useEffect(() => {
+    let vigente = true;
+    const t = setTimeout(async () => {
+      const res: Record<number, string | null> = {};
+      await Promise.all(
+        renglones.map(async (r, i) => {
+          const lect = parseFloat(r.lectura);
+          if (!r.componenteId || r.lectura.trim() === "" || isNaN(lect) || !fecha) return;
+          const { data, error } = await supabase().rpc("validar_registro_pm", {
+            p_componente: r.componenteId,
+            p_fecha: fecha,
+            p_lectura: lect,
+          });
+          res[i] = error ? null : ((data as string | null) ?? null);
+        })
+      );
+      if (vigente) setValidaciones(res);
+    }, 400);
+    return () => {
+      vigente = false;
+      clearTimeout(t);
+    };
+  }, [renglones, fecha]);
+
+  const hayRechazos = Object.values(validaciones).some((v) => v);
+
+  function ultimaLectura(componenteId: string) {
+    return (lecturasRecientes ?? []).find((l) => l.componente_id === componenteId);
+  }
 
   const compDelEquipo = useMemo(
     () => (componentes ?? []).filter((c) => c.equipo_id === equipoId && c.activo),
@@ -53,6 +92,7 @@ export default function RegistroPmPage() {
 
   const grabar = useMutation({
     mutationFn: async () => {
+      if (hayRechazos) throw new Error("Corrija las lecturas marcadas en rojo antes de grabar");
       const filas = renglones.filter((r) => r.componenteId);
       if (!fecha || filas.length === 0)
         throw new Error("Seleccione fecha, equipo y al menos un componente");
@@ -187,6 +227,22 @@ export default function RegistroPmPage() {
                 Quitar
               </button>
             )}
+            {r.componenteId && (
+              <div className="pm-ayuda">
+                {(() => {
+                  const u = ultimaLectura(r.componenteId);
+                  if (!u) return <span className="nota">Sin lecturas de horómetro registradas.</span>;
+                  return (
+                    <span className="nota">
+                      Último contador: <b>{fNum(u.lectura)} h</b> el {fFecha(u.fecha)} {u.turno}
+                      {Number(u.lectura_acum) !== Number(u.lectura) &&
+                        ` (acumulado ${fNum(u.lectura_acum)} h; aquí se escribe el contador)`}
+                    </span>
+                  );
+                })()}
+                {validaciones[i] && <div className="control-error pm-rechazo">{validaciones[i]}</div>}
+              </div>
+            )}
           </div>
         ))}
         <div className="barra-acciones" style={{ marginTop: 10, marginBottom: 0 }}>
@@ -198,7 +254,7 @@ export default function RegistroPmPage() {
           </button>
           <div className="espacio" />
           {mensaje && <span className="nota">{mensaje}</span>}
-          <button onClick={() => grabar.mutate()} disabled={grabar.isPending}>
+          <button onClick={() => grabar.mutate()} disabled={grabar.isPending || hayRechazos}>
             {grabar.isPending ? "Grabando…" : "Grabar PM"}
           </button>
         </div>

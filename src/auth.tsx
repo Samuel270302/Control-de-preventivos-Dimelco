@@ -22,30 +22,40 @@ const Ctx = createContext<Auth>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [perfil, setPerfil] = useState<Perfil | null>(null);
-  const [cargando, setCargando] = useState(true);
+  // Usuario cuyo perfil ya se consultó; mientras no coincida con la sesión, el rol
+  // es desconocido y las rutas por rol no deben decidirse todavía.
+  const [perfilDe, setPerfilDe] = useState<string | null>(null);
+  const [cargandoSesion, setCargandoSesion] = useState(true);
 
   useEffect(() => {
     const sb = supabase();
     sb.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      setCargando(false);
+      setCargandoSesion(false);
     });
     const { data: sub } = sb.auth.onAuthStateChange((_ev, s) => setSession(s));
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  const userId = session?.user.id ?? null;
   useEffect(() => {
-    if (!session) {
+    if (!userId) {
       setPerfil(null);
+      setPerfilDe(null);
       return;
     }
     supabase()
       .from("perfiles")
       .select("*")
-      .eq("user_id", session.user.id)
+      .eq("user_id", userId)
       .maybeSingle()
-      .then(({ data }) => setPerfil((data as Perfil) ?? null));
-  }, [session]);
+      .then(({ data }) => {
+        setPerfil((data as Perfil) ?? null);
+        setPerfilDe(userId);
+      });
+  }, [userId]);
+
+  const cargando = cargandoSesion || (userId !== null && perfilDe !== userId);
 
   return (
     <Ctx.Provider

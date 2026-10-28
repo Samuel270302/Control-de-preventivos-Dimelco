@@ -87,6 +87,19 @@ export default function Historial() {
     onSuccess: () => qc.invalidateQueries(),
   });
 
+  const anularPm = useMutation({
+    mutationFn: async (id: string) => {
+      const motivo = prompt("Motivo de la anulación del registro PM:");
+      if (!motivo) throw new Error("cancelado");
+      const { error } = await supabase()
+        .from("registros_pm")
+        .update({ anulado: true, motivo_anulacion: motivo })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries(),
+  });
+
   function decorarLectura(l: LecturaCalc) {
     const c = compPorId.get(l.componente_id);
     return {
@@ -218,6 +231,7 @@ export default function Historial() {
                 <th className="num">Lectura</th>
                 <th>Clase</th>
                 <th>Responsable</th>
+                {esAdmin && <th></th>}
               </tr>
             </thead>
             <tbody>
@@ -232,6 +246,13 @@ export default function Historial() {
                     <td className="num">{fNum(r.lectura)}</td>
                     <td>{d.clase}</td>
                     <td>{r.responsable}</td>
+                    {esAdmin && (
+                      <td>
+                        <button className="boton-plano" onClick={() => anularPm.mutate(r.id)}>
+                          Anular
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
