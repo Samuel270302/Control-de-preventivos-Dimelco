@@ -427,3 +427,21 @@ tr.fila-con-valor td { background: var(--ambar-suave) !important; }
 .grafica-pm { fill: var(--texto-suave); font-size: 9px; font-weight: 600; paint-order: stroke; stroke: #ffffff; stroke-width: 3px; }
 .clave-pm { display: inline-block; width: 9px; height: 9px; background: #252525; transform: rotate(45deg); margin-left: 12px; }
 .tt-pm { color: var(--oscuro-2); font-weight: 600; }
+
+/* Historial: casilla "Ver anulados" y motivo recortado */
+.casilla-linea {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.casilla-linea input {
+  width: auto;
+}
+.celda-motivo {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

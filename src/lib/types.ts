@@ -73,7 +73,15 @@ export interface RegistroPm {
   gama: number | null;
   lectura: number | null;
   responsable: string | null;
+  creado_por: string | null;
   creado_en: string;
+}
+
+// Campos de anulación que solo se leen de las tablas (las vistas excluyen lo anulado).
+export interface Anulacion {
+  motivo_anulacion: string | null;
+  anulado_por: string | null;
+  anulado_en: string | null;
 }
 
 export interface CambioHorometro {

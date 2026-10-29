@@ -30,6 +30,11 @@ const RUTAS = [
 const resultados = [];
 async function probarRol(rol) {
   const datos = Object.fromEntries(TABLAS.map((n) => [n, fixture(n)]));
+  // Una lectura anulada por el admin para ver la auditoría en el Historial.
+  const base = datos.v_lecturas.find((l) => l.fecha >= "2026-10-01");
+  datos.lecturas = [{ ...base, id: "anulada-1", anulada: true, creado_por: null, origen: "app",
+    motivo_anulacion: "Lectura duplicada por error de digitación", anulado_por: "00000000-0000-0000-0000-000000000001",
+    anulado_en: "2026-10-20T15:30:00Z" }];
   datos.perfiles = datos.perfiles.map((p) =>
     rol === "inactivo" ? { ...p, rol: "invitado", activo: false } : { ...p, rol, activo: true });
   const r = (nombre, cond, detalle = "") => resultados.push({ rol, nombre, ok: !!cond, detalle });
@@ -120,6 +125,16 @@ async function probarRol(rol) {
   r("Control PM: filtro Vencidos deja solo vencidos", estados.length > 0 && estados.every((e) => e === "Vencido"), `${estados.length} filas`);
   await ir("#/historial");
   r("Historial: botón Anular solo admin", (await win.getByRole("button", { name: "Anular" }).count() > 0) === (rol === "admin"));
+  r("Historial: columna Capturado por", (await win.locator("thead th", { hasText: "Capturado por" }).count()) === 1 &&
+    (await win.locator("tbody td", { hasText: "Importado del Excel" }).count()) > 0);
+  await win.locator('input[type="date"]').first().fill("2026-09-01");
+  await win.getByLabel("Ver anulados").check(); await win.waitForTimeout(900);
+  const filaAnulada = (await win.locator("tbody tr").first().textContent()) ?? "";
+  r("Historial: Ver anulados muestra quién anuló, cuándo y el motivo",
+    filaAnulada.includes("Samuel Zapata") && filaAnulada.includes("Lectura duplicada") && /\d{2}\/10\/2026 \d{2}:\d{2}/.test(filaAnulada), filaAnulada.slice(0, 160));
+  r("Historial: en anulados no hay botón Anular", (await win.getByRole("button", { name: "Anular" }).count()) === 0);
+  if (rol === "admin") await win.screenshot({ path: join(SALIDA, "f8_anulados.png") });
+  await win.getByLabel("Ver anulados").uncheck(); await win.waitForTimeout(300);
   await ir("#/graficas");
   await win.getByRole("button", { name: "Tabla" }).click(); await win.waitForTimeout(300);
   r("Gráficas: vista Tabla muestra filas", (await win.locator("tbody tr").count()) > 0);

@@ -30,3 +30,10 @@ export function sumarDiasISO(iso: string, dias: number): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
+
+export function fFechaHora(v: string | null | undefined): string {
+  if (!v) return "";
+  const d = new Date(v);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}

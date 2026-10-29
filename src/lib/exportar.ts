@@ -59,21 +59,43 @@ export async function exportarControl(
   await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
 }
 
+// Datos de auditoría que el Historial agrega a cada fila exportada.
+export interface Auditoria {
+  capturado: string;
+  anuladoPor?: string;
+  anuladoEn?: string;
+  motivo?: string | null;
+}
+
+const COLUMNAS_ANULACION = [
+  { header: "Anulado por", width: 22 },
+  { header: "Anulado el", width: 17 },
+  { header: "Motivo", width: 40 },
+];
+
 export async function exportarLecturas(
-  filas: (LecturaCalc & { equipo: string; tipo: string })[],
-  nombreArchivo: string
+  filas: (Partial<LecturaCalc> & Pick<LecturaCalc, "fecha" | "turno" | "lectura"> &
+    Auditoria & { equipo: string; tipo: string })[],
+  nombreArchivo: string,
+  anuladas = false
 ) {
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Lecturas");
+  const ws = wb.addWorksheet(anuladas ? "Lecturas anuladas" : "Lecturas");
   ws.columns = [
     { header: "Fecha", width: 12 },
     { header: "Equipo", width: 16 },
     { header: "Turno", width: 8 },
     { header: "Tipo de Horómetro", width: 16 },
     { header: "Lectura", width: 11 },
-    { header: "Acumulado", width: 11 },
-    { header: "Horas del Intervalo", width: 11 },
-    { header: "Control", width: 26 },
+    ...(anuladas
+      ? []
+      : [
+          { header: "Acumulado", width: 11 },
+          { header: "Horas del Intervalo", width: 11 },
+          { header: "Control", width: 26 },
+        ]),
+    { header: "Capturado por", width: 22 },
+    ...(anuladas ? COLUMNAS_ANULACION : []),
   ];
   ws.getRow(1).font = { bold: true };
   for (const f of filas)
@@ -83,19 +105,20 @@ export async function exportarLecturas(
       f.turno,
       f.tipo,
       f.lectura,
-      f.lectura_acum,
-      f.horas_intervalo,
-      f.control,
+      ...(anuladas ? [] : [f.lectura_acum, f.horas_intervalo, f.control]),
+      f.capturado,
+      ...(anuladas ? [f.anuladoPor, f.anuladoEn, f.motivo] : []),
     ]);
   await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
 }
 
 export async function exportarRegistrosPm(
-  filas: (RegistroPm & { equipo: string; tipo: string; clase: string })[],
-  nombreArchivo: string
+  filas: (RegistroPm & Auditoria & { equipo: string; tipo: string; clase: string })[],
+  nombreArchivo: string,
+  anulados = false
 ) {
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet("Registro PM");
+  const ws = wb.addWorksheet(anulados ? "Registro PM anulados" : "Registro PM");
   ws.columns = [
     { header: "Fecha", width: 12 },
     { header: "Equipo", width: 16 },
@@ -104,9 +127,21 @@ export async function exportarRegistrosPm(
     { header: "Lectura", width: 11 },
     { header: "Clase", width: 12 },
     { header: "Responsable", width: 22 },
+    { header: "Capturado por", width: 22 },
+    ...(anulados ? COLUMNAS_ANULACION : []),
   ];
   ws.getRow(1).font = { bold: true };
   for (const f of filas)
-    ws.addRow([fFecha(f.fecha), f.equipo, f.tipo, f.gama, f.lectura, f.clase, f.responsable]);
+    ws.addRow([
+      fFecha(f.fecha),
+      f.equipo,
+      f.tipo,
+      f.gama,
+      f.lectura,
+      f.clase,
+      f.responsable,
+      f.capturado,
+      ...(anulados ? [f.anuladoPor, f.anuladoEn, f.motivo] : []),
+    ]);
   await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
 }
