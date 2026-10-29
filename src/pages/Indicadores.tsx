@@ -9,8 +9,8 @@ import type { CumplimientoPm } from "../lib/types";
 const MESES_GRAFICA = 12;
 const MESES_TABLA = 6;
 const NOMBRE_MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-// Una lectura está al día si es de hoy o de ayer.
-const DIAS_AL_DIA = 1;
+// Una lectura está al día si tiene 2 días o menos.
+const DIAS_AL_DIA = 2;
 
 function mesesHasta(hoy: string, n: number) {
   const [a, m] = hoy.split("-").map(Number);
@@ -102,7 +102,7 @@ export default function Indicadores() {
         />
         <Indicador
           valor={totalComp ? `${fNum((100 * alDia) / totalComp, 0)} %` : "Sin dato"}
-          titulo="Lecturas al día (hoy o ayer)"
+          titulo="Lecturas al día (hasta 2 días)"
           detalle={`${alDia} de ${totalComp} componentes`}
           clase={alDia < totalComp ? "alerta" : ""}
         />
@@ -224,7 +224,7 @@ export default function Indicadores() {
       <TablaUtilizacion meses={mesesTabla} />
 
       <div className="titulo-tabla" style={{ marginTop: 16 }}>
-        Componentes sin lectura de hoy o ayer · {lecturasAtrasadas.length}
+        Componentes con más de 2 días sin lectura · {lecturasAtrasadas.length}
       </div>
       <div className="tabla-marco">
         <table>
