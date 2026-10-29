@@ -2,7 +2,16 @@ import ExcelJS from "exceljs";
 import type { ControlFila, LecturaCalc, RegistroPm } from "./types";
 import { fFecha, gamaTexto } from "./fmt";
 
-function descargar(buf: ArrayBuffer, nombre: string) {
+interface AppEscritorio {
+  guardarArchivo?: (datos: Uint8Array, nombre: string) => Promise<string | null>;
+}
+
+async function descargar(buf: ArrayBuffer, nombre: string) {
+  const escritorio = (window as unknown as { appInfo?: AppEscritorio }).appInfo;
+  if (escritorio?.guardarArchivo) {
+    await escritorio.guardarArchivo(new Uint8Array(buf), nombre);
+    return;
+  }
   const blob = new Blob([buf], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
@@ -10,7 +19,7 @@ function descargar(buf: ArrayBuffer, nombre: string) {
   a.href = URL.createObjectURL(blob);
   a.download = nombre;
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
 const COLOR_ESTADO: Record<string, string> = {
@@ -83,7 +92,7 @@ export async function exportarControl(
       fila.getCell(19).font = { color: { argb: "FF1F1F1F" } };
     }
   }
-  descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
+  await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
 }
 
 export async function exportarLecturas(
@@ -114,7 +123,7 @@ export async function exportarLecturas(
       f.horas_intervalo,
       f.control,
     ]);
-  descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
+  await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
 }
 
 export async function exportarRegistrosPm(
@@ -135,5 +144,5 @@ export async function exportarRegistrosPm(
   ws.getRow(1).font = { bold: true };
   for (const f of filas)
     ws.addRow([fFecha(f.fecha), f.equipo, f.tipo, f.gama, f.lectura, f.clase, f.responsable]);
-  descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
+  await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
 }

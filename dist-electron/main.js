@@ -24,7 +24,46 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 
 // electron/main.ts
 var import_electron = require("electron");
+var import_promises = require("node:fs/promises");
 var import_node_path = __toESM(require("node:path"));
+import_electron.ipcMain.handle("guardar-pdf", async (evento, html, nombre) => {
+  const padre = import_electron.BrowserWindow.fromWebContents(evento.sender) ?? void 0;
+  const opciones = {
+    title: "Guardar reporte",
+    defaultPath: import_node_path.default.join(import_electron.app.getPath("documents"), nombre),
+    filters: [{ name: "PDF", extensions: ["pdf"] }]
+  };
+  const { canceled, filePath } = padre ? await import_electron.dialog.showSaveDialog(padre, opciones) : await import_electron.dialog.showSaveDialog(opciones);
+  if (canceled || !filePath) return null;
+  const oculta = new import_electron.BrowserWindow({ show: false, webPreferences: { javascript: false } });
+  try {
+    await oculta.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+    const pdf = await oculta.webContents.printToPDF({
+      landscape: true,
+      pageSize: "A4",
+      printBackground: true,
+      margins: { top: 0.4, bottom: 0.4, left: 0.4, right: 0.4 }
+    });
+    await (0, import_promises.writeFile)(filePath, pdf);
+  } finally {
+    oculta.destroy();
+  }
+  await import_electron.shell.openPath(filePath);
+  return filePath;
+});
+import_electron.ipcMain.handle("guardar-archivo", async (evento, datos, nombre) => {
+  const padre = import_electron.BrowserWindow.fromWebContents(evento.sender) ?? void 0;
+  const extension = import_node_path.default.extname(nombre).slice(1).toLowerCase();
+  const opciones = {
+    title: "Guardar archivo",
+    defaultPath: import_node_path.default.join(import_electron.app.getPath("documents"), nombre),
+    filters: extension === "xlsx" ? [{ name: "Libro de Excel", extensions: ["xlsx"] }] : []
+  };
+  const { canceled, filePath } = padre ? await import_electron.dialog.showSaveDialog(padre, opciones) : await import_electron.dialog.showSaveDialog(opciones);
+  if (canceled || !filePath) return null;
+  await (0, import_promises.writeFile)(filePath, Buffer.from(datos));
+  return filePath;
+});
 function createWindow() {
   const win = new import_electron.BrowserWindow({
     width: 1440,

@@ -1,7 +1,7 @@
 {
   "name": "preventivos-hemco",
   "productName": "Preventivos HEMCO",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Control de mantenimiento preventivo por horómetros",
   "private": true,
   "main": "dist-electron/main.js",
@@ -9,7 +9,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build && esbuild electron/main.ts electron/preload.ts --bundle --platform=node --external:electron --outdir=dist-electron",
     "app": "npm run build && electron .",
-    "dist": "npm run build && electron-builder --win nsis --publish never"
+    "dist": "npm run build && electron-builder --win nsis --publish never",
+    "prueba:electron": "npm run build && xvfb-run -a node tests/electron.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",
@@ -32,9 +33,19 @@
   },
   "build": {
     "appId": "com.hemco.preventivos",
-    "files": ["dist/**", "dist-electron/**"],
-    "directories": { "output": "release" },
-    "win": { "target": "nsis" },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+    "files": [
+      "dist/**",
+      "dist-electron/**"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

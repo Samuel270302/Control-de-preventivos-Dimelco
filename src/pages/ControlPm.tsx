@@ -9,6 +9,7 @@ export default function ControlPm() {
   const { data, isLoading, error } = useControlPm();
   const { data: r40 } = useControl40();
   const [seccion, setSeccion] = useState(1);
+  const [avisoReporte, setAvisoReporte] = useState("");
   if (isLoading) return <p>Cargando control…</p>;
   if (error) return <p className="error-texto">Error al cargar: {String(error)}</p>;
   const todas = (data ?? []).slice().sort((a, b) =>
@@ -23,8 +24,19 @@ export default function ControlPm() {
         <div style={{ flex: 1 }}>
           <h1>Control y proyección de mantenimientos preventivos</h1>
           <p className="subtitulo">PM mayor por horómetro · al {fFecha(hoyISO())}</p>
+          {avisoReporte && <p className="nota">{avisoReporte}</p>}
         </div>
-        <button className="boton-secundario" onClick={() => reporteSemanal(todas, r40 ?? [])}>
+        <button
+          className="boton-secundario"
+          onClick={async () => {
+            try {
+              const ruta = await reporteSemanal(todas, r40 ?? []);
+              setAvisoReporte(ruta ? `Reporte guardado en ${ruta}` : "");
+            } catch (e) {
+              setAvisoReporte(`No se pudo generar el reporte: ${String(e)}`);
+            }
+          }}
+        >
           Reporte semanal (PDF)
         </button>
       </div>

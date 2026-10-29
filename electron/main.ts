@@ -1,5 +1,54 @@
-import { app, BrowserWindow, shell } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
+
+// El renderer no puede abrir ventanas nuevas (ver setWindowOpenHandler); los
+// reportes se convierten a PDF aquí, en una ventana oculta sin JavaScript.
+ipcMain.handle("guardar-pdf", async (evento, html: string, nombre: string) => {
+  const padre = BrowserWindow.fromWebContents(evento.sender) ?? undefined;
+  const opciones = {
+    title: "Guardar reporte",
+    defaultPath: path.join(app.getPath("documents"), nombre),
+    filters: [{ name: "PDF", extensions: ["pdf"] }],
+  };
+  const { canceled, filePath } = padre
+    ? await dialog.showSaveDialog(padre, opciones)
+    : await dialog.showSaveDialog(opciones);
+  if (canceled || !filePath) return null;
+  const oculta = new BrowserWindow({ show: false, webPreferences: { javascript: false } });
+  try {
+    await oculta.loadURL("data:text/html;charset=utf-8," + encodeURIComponent(html));
+    const pdf = await oculta.webContents.printToPDF({
+      landscape: true,
+      pageSize: "A4",
+      printBackground: true,
+      margins: { top: 0.4, bottom: 0.4, left: 0.4, right: 0.4 },
+    });
+    await writeFile(filePath, pdf);
+  } finally {
+    oculta.destroy();
+  }
+  await shell.openPath(filePath);
+  return filePath;
+});
+
+// Electron ignora el atributo download de los enlaces (guarda "download" sin
+// extensión), así que los archivos exportados se guardan desde aquí.
+ipcMain.handle("guardar-archivo", async (evento, datos: Uint8Array, nombre: string) => {
+  const padre = BrowserWindow.fromWebContents(evento.sender) ?? undefined;
+  const extension = path.extname(nombre).slice(1).toLowerCase();
+  const opciones = {
+    title: "Guardar archivo",
+    defaultPath: path.join(app.getPath("documents"), nombre),
+    filters: extension === "xlsx" ? [{ name: "Libro de Excel", extensions: ["xlsx"] }] : [],
+  };
+  const { canceled, filePath } = padre
+    ? await dialog.showSaveDialog(padre, opciones)
+    : await dialog.showSaveDialog(opciones);
+  if (canceled || !filePath) return null;
+  await writeFile(filePath, Buffer.from(datos));
+  return filePath;
+});
 
 function createWindow() {
   const win = new BrowserWindow({

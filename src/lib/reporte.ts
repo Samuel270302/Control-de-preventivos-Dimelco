@@ -42,7 +42,7 @@ function tabla(filas: ControlFila[]) {
     <tbody>${filasHtml}</tbody></table>`;
 }
 
-export function reporteSemanal(pm: ControlFila[], r40: ControlFila[]) {
+export async function reporteSemanal(pm: ControlFila[], r40: ControlFila[]): Promise<string | null> {
   const resumen = (filas: ControlFila[]) =>
     ORDEN_ESTADOS.map((e) => `<span class="chip">${e}: <b>${cuenta(filas, e)}</b></span>`).join(" ");
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -68,10 +68,21 @@ export function reporteSemanal(pm: ControlFila[], r40: ControlFila[]) {
   <h2>Rutina de percusión 40 h</h2>
   <p>${resumen(r40)}</p>
   ${tabla(r40)}
-  <script>window.onload = () => setTimeout(() => window.print(), 300);</script>
   </body></html>`;
+  const nombre = `Reporte semanal preventivos ${hoyISO()}.pdf`;
+  const escritorio = (window as unknown as { appInfo?: AppInfo }).appInfo;
+  if (escritorio?.guardarPdf) {
+    // App de escritorio: Electron genera el PDF y pregunta dónde guardarlo.
+    return escritorio.guardarPdf(html, nombre);
+  }
+  // Navegador (desarrollo): ventana nueva con el diálogo de impresión.
   const v = window.open("", "_blank");
-  if (!v) return;
-  v.document.write(html);
+  if (!v) return null;
+  v.document.write(html.replace("</body>", "<script>window.onload = () => setTimeout(() => window.print(), 300);</script></body>"));
   v.document.close();
+  return null;
+}
+
+interface AppInfo {
+  guardarPdf?: (html: string, nombre: string) => Promise<string | null>;
 }

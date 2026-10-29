@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useParametros, usePlanes } from "../lib/queries";
@@ -140,8 +140,21 @@ function EditorPlan({
   onCerrar: () => void;
 }) {
   const [gamasTexto, setGamasTexto] = useState(plan.ciclo_gamas.join(", "));
+  // Abierto como modal: con el atributo open el diálogo queda en el flujo de la
+  // página, debajo de las tablas y fuera de la vista.
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (d && !d.open) d.showModal();
+  }, []);
   return (
-    <dialog open>
+    <dialog
+      ref={ref}
+      onCancel={(e) => {
+        e.preventDefault();
+        onCerrar();
+      }}
+    >
       <h1 style={{ fontSize: 16 }}>Editar plan {plan.clave}</h1>
       <label className="campo">
         <span>Intervalo (h)</span>
