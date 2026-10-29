@@ -1,3 +1,4 @@
+import EnlaceEquipo from "./EnlaceEquipo";
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ColumnaControl, ControlFila } from "../lib/types";
@@ -258,7 +259,9 @@ export default function ControlTabla({
           <tbody>
             {visibles.map((f) => (
               <tr key={f.componente_id} className={CLASE_ESTADO[f.estado] ?? "fila-sindatos"}>
-                <td className="col-fija">{f.cod_interno}</td>
+                <td className="col-fija">
+                  <EnlaceEquipo componenteId={f.componente_id} texto={f.cod_interno} />
+                </td>
                 {colsActivas.map((c) => (
                   <td key={c.columna} className={COLUMNAS[c.columna].num ? "num" : ""}>
                     {COLUMNAS[c.columna].render(f)}

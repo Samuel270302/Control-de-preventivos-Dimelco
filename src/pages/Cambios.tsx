@@ -99,7 +99,7 @@ export default function Cambios() {
           <label className="campo" style={{ maxWidth: 280 }}>
             <span>Componente</span>
             <select value={componenteId} onChange={(e) => setComponenteId(e.target.value)}>
-              <option value="">— seleccione —</option>
+              <option value="">Seleccione</option>
               {(componentes ?? [])
                 .filter((c) => c.activo)
                 .sort((a, b) =>

@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useComponentes, useEquipos, usePlanes } from "../lib/queries";
 import { fFecha } from "../lib/fmt";
 import type { TipoHorometro } from "../lib/types";
 import { useAvisos } from "../components/Avisos";
+import EditorEquipo from "../components/EditorEquipo";
+import type { Equipo } from "../lib/types";
 
 const TIPOS: TipoHorometro[] = [
   "Diesel",
@@ -20,6 +23,7 @@ export default function Equipos() {
   const { data: componentes } = useComponentes();
   const { data: planes } = usePlanes();
   const { avisar } = useAvisos();
+  const [editando, setEditando] = useState<Equipo | null>(null);
 
   const [nuevoEq, setNuevoEq] = useState({ cod: "", sap: "", modelo: "", fecha: "" });
   const [nuevoComp, setNuevoComp] = useState({
@@ -103,6 +107,14 @@ export default function Equipos() {
 
   return (
     <>
+      {editando && (
+        <EditorEquipo
+          equipo={editando}
+          componentes={compPorEquipo.get(editando.id) ?? []}
+          planes={planes ?? []}
+          onCerrar={() => setEditando(null)}
+        />
+      )}
       <h1>Maestro de equipos y componentes</h1>
       <p className="subtitulo">
         Cada componente (equipo + tipo de horómetro) es una fila del control. Un componente
@@ -138,7 +150,7 @@ export default function Equipos() {
           <label className="campo" style={{ maxWidth: 190 }}>
             <span>Nuevo componente: equipo</span>
             <select value={nuevoComp.equipoId} onChange={(e) => setNuevoComp({ ...nuevoComp, equipoId: e.target.value })}>
-              <option value="">— seleccione —</option>
+              <option value="">Seleccione</option>
               {(equipos ?? []).map((e) => (
                 <option key={e.id} value={e.id}>{e.cod_interno}</option>
               ))}
@@ -176,7 +188,7 @@ export default function Equipos() {
           <label className="campo" style={{ maxWidth: 170 }}>
             <span>Plan MP</span>
             <select value={nuevoComp.plan} onChange={(e) => setNuevoComp({ ...nuevoComp, plan: e.target.value })}>
-              <option value="">— seleccione —</option>
+              <option value="">Seleccione</option>
               {(planes ?? []).filter((p) => p.clave !== "RUTINA-40").map((p) => (
                 <option key={p.clave}>{p.clave}</option>
               ))}
@@ -212,12 +224,15 @@ export default function Equipos() {
               <th>Inicio operación</th>
               <th>Componentes</th>
               <th>Activo</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {(equipos ?? []).map((e) => (
               <tr key={e.id}>
-                <td>{e.cod_interno}</td>
+                <td>
+                  <Link to={`/equipo/${e.id}`} className="enlace-equipo">{e.cod_interno}</Link>
+                </td>
                 <td>{e.cod_sap ?? "Sin SAP"}</td>
                 <td>{e.modelo}</td>
                 <td>{fFecha(e.fecha_inicio_operacion)}</td>
@@ -240,6 +255,11 @@ export default function Equipos() {
                     onClick={() => alternarEq.mutate({ id: e.id, activo: !e.activo })}
                   >
                     {e.activo ? "Sí · desactivar" : "No · activar"}
+                  </button>
+                </td>
+                <td>
+                  <button className="boton-plano" onClick={() => setEditando(e)}>
+                    Editar
                   </button>
                 </td>
               </tr>

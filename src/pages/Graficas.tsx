@@ -1,3 +1,4 @@
+import EnlaceEquipo from "../components/EnlaceEquipo";
 import { useMemo, useState } from "react";
 import { useControlPm, useLecturasDesde, usePmDesde } from "../lib/queries";
 import { EsqueletoTabla } from "../components/Esqueleto";
@@ -96,7 +97,9 @@ export default function Graficas() {
             <div className="tarjeta-grafica" key={fila.componente_id}>
               <div className="tg-cabecera">
                 <div>
-                  <div className="tg-equipo">{fila.cod_interno}</div>
+                  <div className="tg-equipo">
+                    <EnlaceEquipo componenteId={fila.componente_id} texto={fila.cod_interno} />
+                  </div>
                   <div className="tg-componente">{fila.nombre}</div>
                 </div>
                 <EstadoBadge estado={fila.estado} />
@@ -118,11 +121,11 @@ export default function Graficas() {
               )}
               <div className="tg-pie">
                 <div>
-                  <span className="tg-dato">{horas !== null ? `+${fNum(horas)} h` : "—"}</span>
+                  <span className="tg-dato">{horas !== null ? `+${fNum(horas)} h` : "Sin dato"}</span>
                   <span className="tg-etiqueta">en 30 días</span>
                 </div>
                 <div>
-                  <span className="tg-dato">{porDia !== null ? `${fNum(porDia, 1)} h/día` : "—"}</span>
+                  <span className="tg-dato">{porDia !== null ? `${fNum(porDia, 1)} h/día` : "Sin dato"}</span>
                   <span className="tg-etiqueta">promedio</span>
                 </div>
                 <MetaPie fila={fila} />
@@ -158,7 +161,7 @@ export default function Graficas() {
                   const p1 = puntos[puntos.length - 1];
                   return (
                     <tr key={fila.componente_id}>
-                      <td>{fila.cod_interno}</td>
+                      <td><EnlaceEquipo componenteId={fila.componente_id} texto={fila.cod_interno} /></td>
                       <td>{fila.nombre}</td>
                       <td className="num">{puntos.length}</td>
                       <td>{p0 ? fFecha(p0.fecha) : ""}</td>
@@ -187,7 +190,7 @@ function MetaPie({ fila }: { fila: ControlFila }) {
   const faltan = fila.hrs_faltantes;
   return (
     <div>
-      <span className="tg-dato">{fila.meta_acum !== null ? `${fNum(fila.meta_acum, 0)} h` : "—"}</span>
+      <span className="tg-dato">{fila.meta_acum !== null ? `${fNum(fila.meta_acum, 0)} h` : "Sin dato"}</span>
       <span className="tg-etiqueta">meta PM</span>
       {faltan !== null &&
         (faltan <= 0 ? (

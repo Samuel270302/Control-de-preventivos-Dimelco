@@ -213,7 +213,7 @@ export default function Lecturas() {
                 <tr key={comp.id} className={texto.trim() !== "" ? "fila-con-valor" : ""}>
                   <td>{equipo}</td>
                   <td>{comp.tipo_horometro}</td>
-                  <td className="num">{u ? fNum(u.lectura) : "—sin lecturas—"}</td>
+                  <td className="num">{u ? fNum(u.lectura) : "Sin lecturas"}</td>
                   <td>{u ? `${fFecha(u.fecha)} ${u.turno}` : ""}</td>
                   <td className="num">
                     <input

@@ -65,6 +65,10 @@ async function probarRol(rol) {
       if (v.startsWith("eq.")) filas = filas.filter((f) => String(f[k]) === v.slice(3));
       else if (v.startsWith("gte.")) filas = filas.filter((f) => String(f[k]) >= v.slice(4));
       else if (v.startsWith("lte.")) filas = filas.filter((f) => String(f[k]) <= v.slice(4));
+      else if (v.startsWith("in.")) {
+        const lista = v.slice(4, -1).split(",").map((x) => x.replaceAll('"', ""));
+        filas = filas.filter((f) => lista.includes(String(f[k])));
+      }
     }
     const objeto = (req.headers()["accept"] ?? "").includes("pgrst.object");
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(objeto ? (filas[0] ?? null) : filas) });
@@ -123,6 +127,32 @@ async function probarRol(rol) {
   await win.locator(".chip.vencido").click(); await win.waitForTimeout(300);
   const estados = await win.locator("tbody .estado").allTextContents();
   r("Control PM: filtro Vencidos deja solo vencidos", estados.length > 0 && estados.every((e) => e === "Vencido"), `${estados.length} filas`);
+  // F5: ficha por equipo desde el Control PM
+  await ir("#/control");
+  const enlace = win.locator("tbody a.enlace-equipo").first();
+  const nombreEquipo = (await enlace.textContent()) ?? "";
+  await enlace.click(); await win.waitForTimeout(1300);
+  r("Ficha: se abre desde el Control PM", (await win.locator("h1").first().textContent()) === nombreEquipo && win.url().includes("#/equipo/"), nombreEquipo);
+  r("Ficha: datos del control por componente", (await win.locator(".tarjeta-ficha .datos-ficha").count()) > 0);
+  r("Ficha: últimos mantenimientos y lecturas", (await win.locator(".fila-tablas-ficha tbody tr").count()) > 0);
+  r("Ficha: Editar equipo solo admin", (await win.getByRole("button", { name: "Editar equipo" }).count() > 0) === (rol === "admin"));
+  if (rol === "admin") {
+    await win.screenshot({ path: join(SALIDA, "f5_ficha.png"), fullPage: true });
+    // F6: editar desde la ficha
+    await win.getByRole("button", { name: "Editar equipo" }).click(); await win.waitForTimeout(400);
+    const dlg = win.locator("dialog[open]");
+    await dlg.locator('label:has-text("Modelo") input').fill("Modelo de prueba");
+    await dlg.locator("tbody tr").first().locator('input[aria-label^="Nombre"]').fill("Nombre de prueba");
+    await win.screenshot({ path: join(SALIDA, "f6_editor.png") });
+    const antes = escrituras.length;
+    await dlg.getByRole("button", { name: "Guardar" }).click(); await win.waitForTimeout(900);
+    const nuevas = escrituras.slice(antes);
+    r("F6: guardar actualiza el equipo y solo el componente cambiado",
+      nuevas.filter((e) => e.startsWith("PATCH equipos")).length === 1 && nuevas.filter((e) => e.startsWith("PATCH componentes")).length === 1, nuevas.join(", "));
+    r("F6: el editor se cierra al guardar", (await win.locator("dialog[open]").count()) === 0);
+    await ir("#/equipos");
+    r("F6: botón Editar en el maestro", (await win.getByRole("button", { name: "Editar", exact: true }).count()) > 0);
+  }
   await ir("#/historial");
   r("Historial: botón Anular solo admin", (await win.getByRole("button", { name: "Anular" }).count() > 0) === (rol === "admin"));
   r("Historial: columna Capturado por", (await win.locator("thead th", { hasText: "Capturado por" }).count()) === 1 &&

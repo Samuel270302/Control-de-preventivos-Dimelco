@@ -160,7 +160,7 @@ export default function RegistroPmPage() {
                 setRenglones([{ ...RENGLON_VACIO }]);
               }}
             >
-              <option value="">— seleccione —</option>
+              <option value="">Seleccione</option>
               {(equipos ?? [])
                 .filter((e) => e.activo)
                 .map((e) => (
@@ -187,7 +187,7 @@ export default function RegistroPmPage() {
                   setRenglones(n);
                 }}
               >
-                <option value="">— seleccione —</option>
+                <option value="">Seleccione</option>
                 {compDelEquipo.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.nombre} ({c.tipo_horometro})
@@ -205,7 +205,7 @@ export default function RegistroPmPage() {
                   setRenglones(n);
                 }}
               >
-                <option value="">— sin gama —</option>
+                <option value="">Sin gama</option>
                 {gamasDe(r.componenteId).map((g) => (
                   <option key={g} value={g}>
                     {g}
