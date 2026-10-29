@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth";
 import { useCambios, useComponentes, useEquipos } from "../lib/queries";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
+import { useAvisos } from "../components/Avisos";
 
 export default function Cambios() {
   const { session, esAdmin } = useAuth();
@@ -17,7 +18,7 @@ export default function Cambios() {
   const [lecturaVieja, setLecturaVieja] = useState("");
   const [lecturaNueva, setLecturaNueva] = useState("0");
   const [fuente, setFuente] = useState("");
-  const [mensaje, setMensaje] = useState("");
+  const { avisar } = useAvisos();
 
   const nombreEq = useMemo(
     () => new Map((equipos ?? []).map((e) => [e.id, e.cod_interno])),
@@ -65,13 +66,13 @@ export default function Cambios() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setMensaje("Cambio registrado, queda por validar");
+      avisar("Cambio registrado, queda por validar");
       setLecturaVieja("");
       setLecturaNueva("0");
       setFuente("");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setMensaje(e.message),
+    onError: (e: Error) => avisar(e.message, "error"),
   });
 
   const validar = useMutation({
@@ -147,7 +148,6 @@ export default function Cambios() {
             )}
           </span>
           <div className="espacio" />
-          {mensaje && <span className="nota">{mensaje}</span>}
           <button onClick={() => grabar.mutate()} disabled={grabar.isPending}>
             Registrar cambio
           </button>

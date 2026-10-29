@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { useControlPm, useLecturasDesde } from "../lib/queries";
+import { useControlPm, useLecturasDesde, usePmDesde } from "../lib/queries";
+import { EsqueletoTabla } from "../components/Esqueleto";
 import { fFecha, fNum, hoyISO, sumarDiasISO } from "../lib/fmt";
 import { PestaniasSistema, SISTEMAS } from "../lib/sistemas";
 import EstadoBadge from "../components/EstadoBadge";
@@ -20,6 +21,7 @@ export default function Graficas() {
   const desde = sumarDiasISO(hasta, -VENTANA_DIAS);
   const { data: control, isLoading: c1 } = useControlPm();
   const { data: lecturas, isLoading: c2 } = useLecturasDesde(desde);
+  const { data: pms } = usePmDesde(desde);
   const [seccion, setSeccion] = useState(1);
   const [vista, setVista] = useState<"graficas" | "tabla">("graficas");
 
@@ -82,10 +84,11 @@ export default function Graficas() {
         <span className="nota leyenda-grafica">
           <span className="clave-linea" /> Horómetro acumulado
           <span className="clave-meta" /> Meta del próximo PM
+          <span className="clave-pm" /> PM ejecutado
         </span>
       </div>
 
-      {(c1 || c2) && <p>Cargando lecturas…</p>}
+      {(c1 || c2) && <EsqueletoTabla filas={6} conResumen={false} />}
 
       {!c1 && !c2 && vista === "graficas" && (
         <div className="rejilla-graficas">
@@ -99,7 +102,13 @@ export default function Graficas() {
                 <EstadoBadge estado={fila.estado} />
               </div>
               {puntos.length >= 2 ? (
-                <GraficaHorometro puntos={puntos} desde={desde} hasta={hasta} meta={fila.meta_acum} />
+                <GraficaHorometro
+                  puntos={puntos}
+                  desde={desde}
+                  hasta={hasta}
+                  meta={fila.meta_acum}
+                  pms={(pms ?? []).filter((p) => p.componente_id === fila.componente_id)}
+                />
               ) : (
                 <div className="tg-vacia">
                   {puntos.length === 1

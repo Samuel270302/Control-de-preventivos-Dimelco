@@ -1,6 +1,6 @@
 import ExcelJS from "exceljs";
 import type { ControlFila, LecturaCalc, RegistroPm } from "./types";
-import { fFecha, gamaTexto } from "./fmt";
+import { fFecha } from "./fmt";
 
 interface AppEscritorio {
   guardarArchivo?: (datos: Uint8Array, nombre: string) => Promise<string | null>;
@@ -29,67 +29,31 @@ const COLOR_ESTADO: Record<string, string> = {
   "🟢 Normal": "FFC6EFCE",
 };
 
+export interface ColumnaExcel {
+  etiqueta: string;
+  valor: (f: ControlFila) => string | number | null;
+  ancho: number;
+  esEstado?: boolean;
+}
+
+// Las columnas llegan ya filtradas y ordenadas como las definió el administrador.
 export async function exportarControl(
   filas: ControlFila[],
   titulo: string,
-  nombreArchivo: string
+  nombreArchivo: string,
+  columnas: ColumnaExcel[]
 ) {
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet(titulo.slice(0, 31));
-  ws.columns = [
-    { header: "Cod. Interno", width: 16 },
-    { header: "Cód. SAP", width: 10 },
-    { header: "Modelo", width: 18 },
-    { header: "Sistema / Componente", width: 30 },
-    { header: "Fecha Último PM", width: 13 },
-    { header: "Gama Último PM", width: 10 },
-    { header: "Horómetro Último PM (acum.)", width: 14 },
-    { header: "Próxima Gama", width: 11 },
-    { header: "Meta (acum.)", width: 12 },
-    { header: "Meta (contador)", width: 12 },
-    { header: "Última Lectura (acum.)", width: 12 },
-    { header: "Última Lectura (contador)", width: 12 },
-    { header: "Fecha Última Lectura", width: 13 },
-    { header: "Antigüedad (días)", width: 10 },
-    { header: "Hrs Faltantes", width: 11 },
-    { header: "Tendencia (h/día)", width: 10 },
-    { header: "Días Restantes", width: 10 },
-    { header: "Fecha Estimada", width: 13 },
-    { header: "Estado", width: 20 },
-    { header: "Observación", width: 42 },
-  ];
+  const ws = wb.addWorksheet(titulo.replace(/[\\/?*[\]:]/g, " ").slice(0, 31));
+  ws.columns = columnas.map((c) => ({ header: c.etiqueta, width: c.ancho }));
   ws.getRow(1).font = { bold: true };
+  const colEstado = columnas.findIndex((c) => c.esEstado) + 1;
   for (const f of filas) {
-    const fila = ws.addRow([
-      f.cod_interno,
-      f.cod_sap ?? "Sin SAP",
-      f.modelo,
-      f.nombre,
-      fFecha(f.fecha_ultimo_pm),
-      f.gama_ultimo_pm ?? (f.fecha_ultimo_pm ? "Sin gama" : ""),
-      f.horometro_ultimo_pm,
-      gamaTexto(f.proxima_gama),
-      f.meta_acum,
-      f.meta_contador,
-      f.ultima_lectura_acum,
-      f.ultima_lectura_contador,
-      fFecha(f.fecha_ultima_lectura),
-      f.antiguedad_dias,
-      f.hrs_faltantes,
-      f.tendencia,
-      f.dias_restantes,
-      fFecha(f.fecha_estimada),
-      f.estado,
-      f.observacion,
-    ]);
+    const fila = ws.addRow(columnas.map((c) => c.valor(f)));
     const color = COLOR_ESTADO[f.estado];
-    if (color) {
-      fila.getCell(19).fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: color },
-      };
-      fila.getCell(19).font = { color: { argb: "FF1F1F1F" } };
+    if (colEstado > 0 && color) {
+      fila.getCell(colEstado).fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+      fila.getCell(colEstado).font = { color: { argb: "FF1F1F1F" } };
     }
   }
   await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);

@@ -4,13 +4,15 @@ import { hoyISO, fFecha } from "../lib/fmt";
 import { reporteSemanal } from "../lib/reporte";
 import { PestaniasSistema, SISTEMAS } from "../lib/sistemas";
 import ControlTabla from "../components/ControlTabla";
+import { EsqueletoTabla } from "../components/Esqueleto";
+import { useAvisos } from "../components/Avisos";
 
 export default function ControlPm() {
   const { data, isLoading, error } = useControlPm();
   const { data: r40 } = useControl40();
   const [seccion, setSeccion] = useState(1);
-  const [avisoReporte, setAvisoReporte] = useState("");
-  if (isLoading) return <p>Cargando control…</p>;
+  const { avisar } = useAvisos();
+  if (isLoading) return <EsqueletoTabla />;
   if (error) return <p className="error-texto">Error al cargar: {String(error)}</p>;
   const todas = (data ?? []).slice().sort((a, b) =>
     a.cod_interno.localeCompare(b.cod_interno, "es", { numeric: true }) ||
@@ -24,16 +26,15 @@ export default function ControlPm() {
         <div style={{ flex: 1 }}>
           <h1>Control y proyección de mantenimientos preventivos</h1>
           <p className="subtitulo">PM mayor por horómetro · al {fFecha(hoyISO())}</p>
-          {avisoReporte && <p className="nota">{avisoReporte}</p>}
         </div>
         <button
           className="boton-secundario"
           onClick={async () => {
             try {
               const ruta = await reporteSemanal(todas, r40 ?? []);
-              setAvisoReporte(ruta ? `Reporte guardado en ${ruta}` : "");
+              if (ruta) avisar(`Reporte guardado en ${ruta}`);
             } catch (e) {
-              setAvisoReporte(`No se pudo generar el reporte: ${String(e)}`);
+              avisar(`No se pudo generar el reporte: ${String(e)}`, "error");
             }
           }}
         >

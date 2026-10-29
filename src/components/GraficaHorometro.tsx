@@ -39,11 +39,13 @@ export default function GraficaHorometro({
   desde,
   hasta,
   meta,
+  pms = [],
 }: {
   puntos: PuntoHorometro[];
   desde: string;
   hasta: string;
   meta: number | null;
+  pms?: { fecha: string; gama: number | null; lectura_acum: number | null }[];
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [activo, setActivo] = useState<number | null>(null);
@@ -60,6 +62,14 @@ export default function GraficaHorometro({
     if (metaVisible) {
       yMin = Math.min(yMin, meta!);
       yMax = Math.max(yMax, meta!);
+    }
+    // Igual que la meta: un PM con lectura muy alejada de los datos no se dibuja.
+    const pmsVisibles = pms.filter(
+      (p) => p.lectura_acum !== null && p.lectura_acum >= yMin - tramo && p.lectura_acum <= yMax + tramo
+    );
+    for (const p of pmsVisibles) {
+      yMin = Math.min(yMin, p.lectura_acum!);
+      yMax = Math.max(yMax, p.lectura_acum!);
     }
     if (yMax - yMin < 10) {
       yMin -= 5;
@@ -85,8 +95,14 @@ export default function GraficaHorometro({
       { px: x(mitad.getTime()), texto: fFecha(mitad.toISOString().slice(0, 10)).slice(0, 5), ancla: "middle" as const },
       { px: x(t1 - DIA_MS), texto: fFecha(hasta).slice(0, 5), ancla: "end" as const },
     ];
-    return { xy, linea, area, ticks, y, metaVisible, etiquetasX };
-  }, [puntos, desde, hasta, meta]);
+    const marcasPm = pmsVisibles.map((p) => ({
+      px: x(new Date(p.fecha + "T12:00:00").getTime()),
+      py: y(p.lectura_acum!),
+      gama: p.gama,
+      fecha: p.fecha,
+    }));
+    return { xy, linea, area, ticks, y, metaVisible, etiquetasX, marcasPm };
+  }, [puntos, desde, hasta, meta, pms]);
 
   function mover(e: React.PointerEvent<SVGSVGElement>) {
     const svg = svgRef.current;
@@ -145,6 +161,19 @@ export default function GraficaHorometro({
         )}
         <path d={g.area} fill={COLOR_RELLENO} opacity={0.12} />
         <path d={g.linea} fill="none" stroke={COLOR_LINEA} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+        {g.marcasPm.map((m) => (
+          <g key={m.fecha + m.gama}>
+            <path
+              d={`M${m.px},${m.py - 6}L${m.px + 6},${m.py}L${m.px},${m.py + 6}L${m.px - 6},${m.py}Z`}
+              fill="#252525"
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
+            <text x={m.px} y={m.py - 10} textAnchor="middle" className="grafica-pm">
+              PM {m.gama ?? "s/g"}
+            </text>
+          </g>
+        ))}
         {ultimo && <circle cx={ultimo.px} cy={ultimo.py} r={4} fill={COLOR_LINEA} stroke="#ffffff" strokeWidth={2} />}
         {selXY && (
           <g>
@@ -167,6 +196,13 @@ export default function GraficaHorometro({
             {fFecha(sel.fecha)} · {sel.turno}
           </div>
           {sel.contador !== sel.acumulado && <div className="tt-sub">Contador {fNum(sel.contador)} h</div>}
+          {pms
+            .filter((p) => p.fecha === sel.fecha)
+            .map((p) => (
+              <div key={p.fecha + p.gama} className="tt-sub tt-pm">
+                PM gama {p.gama ?? "sin gama"} ejecutado este día
+              </div>
+            ))}
         </div>
       )}
     </div>

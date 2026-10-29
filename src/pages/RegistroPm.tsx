@@ -11,6 +11,7 @@ import {
 } from "../lib/queries";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
 import { useDialogoMotivo } from "../components/DialogoMotivo";
+import { useAvisos } from "../components/Avisos";
 
 interface Renglon {
   componenteId: string;
@@ -34,7 +35,7 @@ export default function RegistroPmPage() {
   // Un PM que interviene dos componentes (p. ej. motor y perforadora)
   // se registra en renglones separados, cada uno con su lectura.
   const [renglones, setRenglones] = useState<Renglon[]>([{ ...RENGLON_VACIO }]);
-  const [mensaje, setMensaje] = useState("");
+  const { avisar } = useAvisos();
   const { data: lecturasRecientes } = useLecturasRecientes(1500);
   // Resultado del control de la base por renglón: null = OK, texto = motivo del rechazo.
   const [validaciones, setValidaciones] = useState<Record<number, string | null>>({});
@@ -111,12 +112,12 @@ export default function RegistroPmPage() {
       return filas.length;
     },
     onSuccess: (n) => {
-      setMensaje(`${n} registro(s) de PM grabado(s)`);
+      avisar(`${n} registro(s) de PM grabado(s)`);
       setRenglones([{ ...RENGLON_VACIO }]);
       setResponsable("");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setMensaje(e.message),
+    onError: (e: Error) => avisar(e.message, "error"),
   });
 
   const { pedirMotivo, dialogo } = useDialogoMotivo();
@@ -130,10 +131,10 @@ export default function RegistroPmPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setMensaje("Registro PM anulado");
+      avisar("Registro PM anulado");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setMensaje(`No se pudo anular: ${e.message}`),
+    onError: (e: Error) => avisar(`No se pudo anular: ${e.message}`, "error"),
   });
 
   return (
@@ -258,7 +259,6 @@ export default function RegistroPmPage() {
             + Otro componente del mismo PM
           </button>
           <div className="espacio" />
-          {mensaje && <span className="nota">{mensaje}</span>}
           <button onClick={() => grabar.mutate()} disabled={grabar.isPending || hayRechazos}>
             {grabar.isPending ? "Grabando…" : "Grabar PM"}
           </button>

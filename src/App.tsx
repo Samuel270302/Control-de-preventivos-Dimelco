@@ -5,6 +5,7 @@ import { supabase } from "./lib/supabase";
 import { AuthProvider, useAuth } from "./auth";
 import { useTiempoReal } from "./lib/queries";
 import Layout from "./components/Layout";
+import { AvisosProvider } from "./components/Avisos";
 import Setup from "./pages/Setup";
 import Login from "./pages/Login";
 import ControlPm from "./pages/ControlPm";
@@ -70,7 +71,9 @@ export default function App() {
   if (!configurado) return <Setup alGuardar={() => setConfigurado(true)} />;
   return (
     <AuthProvider>
-      <Interior />
+      <AvisosProvider>
+        <Interior />
+      </AvisosProvider>
     </AuthProvider>
   );
 }

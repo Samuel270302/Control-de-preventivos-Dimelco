@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "./supabase";
+import { reportarCanal } from "./conexion";
 import type {
   CambioHorometro,
   ColumnaControl,
@@ -94,6 +95,29 @@ export function useLecturasDesde(desde: string) {
   });
 }
 
+export interface PmVentana {
+  componente_id: string;
+  fecha: string;
+  gama: number | null;
+  lectura_acum: number | null;
+}
+
+export function usePmDesde(desde: string) {
+  return useQuery({
+    queryKey: ["v_registros_pm_desde", desde],
+    queryFn: async () => {
+      const { data, error } = await supabase()
+        .from("v_registros_pm")
+        .select("componente_id,fecha,gama,lectura_acum")
+        .gte("fecha", desde)
+        .order("fecha", { ascending: true })
+        .limit(2000);
+      if (error) throw error;
+      return data as PmVentana[];
+    },
+  });
+}
+
 export function useRegistrosPm(limite = 300) {
   return useQuery({
     queryKey: ["registros_pm", limite],
@@ -155,7 +179,7 @@ export function useTiempoReal() {
           qc.invalidateQueries();
         }, ESPERA_RECARGA_MS);
       })
-      .subscribe();
+      .subscribe((estado) => reportarCanal(estado));
     return () => {
       if (temporizador) clearTimeout(temporizador);
       void supabase().removeChannel(canal);

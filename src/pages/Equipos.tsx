@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 import { useComponentes, useEquipos, usePlanes } from "../lib/queries";
 import { fFecha } from "../lib/fmt";
 import type { TipoHorometro } from "../lib/types";
+import { useAvisos } from "../components/Avisos";
 
 const TIPOS: TipoHorometro[] = [
   "Diesel",
@@ -18,7 +19,7 @@ export default function Equipos() {
   const { data: equipos } = useEquipos();
   const { data: componentes } = useComponentes();
   const { data: planes } = usePlanes();
-  const [mensaje, setMensaje] = useState("");
+  const { avisar } = useAvisos();
 
   const [nuevoEq, setNuevoEq] = useState({ cod: "", sap: "", modelo: "", fecha: "" });
   const [nuevoComp, setNuevoComp] = useState({
@@ -55,10 +56,10 @@ export default function Equipos() {
     },
     onSuccess: () => {
       setNuevoEq({ cod: "", sap: "", modelo: "", fecha: "" });
-      setMensaje("Equipo creado. Agregue sus componentes abajo.");
+      avisar("Equipo creado. Agregue sus componentes abajo.");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setMensaje(e.message),
+    onError: (e: Error) => avisar(e.message, "error"),
   });
 
   const crearComponente = useMutation({
@@ -78,10 +79,10 @@ export default function Equipos() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setMensaje("Componente creado: ya aparece en el control");
+      avisar("Componente creado: ya aparece en el control");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setMensaje(e.message),
+    onError: (e: Error) => avisar(e.message, "error"),
   });
 
   const alternarComp = useMutation({
@@ -199,7 +200,6 @@ export default function Equipos() {
             <button onClick={() => crearComponente.mutate()}>Crear componente</button>
           </div>
         </div>
-        {mensaje && <div className="nota" style={{ marginTop: 8 }}>{mensaje}</div>}
       </div>
 
       <div className="tabla-marco">

@@ -72,6 +72,20 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
   }
+  // La pantalla de lecturas bloquea el cierre si hay valores sin grabar
+  // (beforeunload); aquí se le pregunta al usuario en vez de ignorar el cierre.
+  win.webContents.on("will-prevent-unload", (evento) => {
+    const respuesta = dialog.showMessageBoxSync(win, {
+      type: "question",
+      buttons: ["Salir sin grabar", "Seguir capturando"],
+      defaultId: 1,
+      cancelId: 1,
+      title: "Preventivos HEMCO",
+      message: "Hay lecturas sin grabar",
+      detail: "Si cierras la app, las lecturas escritas y no grabadas se pierden.",
+    });
+    if (respuesta === 0) evento.preventDefault();
+  });
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url);
     return { action: "deny" };

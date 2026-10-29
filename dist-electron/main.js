@@ -85,6 +85,18 @@ function createWindow() {
   } else {
     win.loadFile(import_node_path.default.join(__dirname, "../dist/index.html"));
   }
+  win.webContents.on("will-prevent-unload", (evento) => {
+    const respuesta = import_electron.dialog.showMessageBoxSync(win, {
+      type: "question",
+      buttons: ["Salir sin grabar", "Seguir capturando"],
+      defaultId: 1,
+      cancelId: 1,
+      title: "Preventivos HEMCO",
+      message: "Hay lecturas sin grabar",
+      detail: "Si cierras la app, las lecturas escritas y no grabadas se pierden."
+    });
+    if (respuesta === 0) evento.preventDefault();
+  });
   win.webContents.setWindowOpenHandler(({ url }) => {
     import_electron.shell.openExternal(url);
     return { action: "deny" };

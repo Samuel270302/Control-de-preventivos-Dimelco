@@ -7,6 +7,7 @@ import { exportarLecturas, exportarRegistrosPm } from "../lib/exportar";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
 import type { LecturaCalc, RegistroPm } from "../lib/types";
 import { useDialogoMotivo } from "../components/DialogoMotivo";
+import { useAvisos } from "../components/Avisos";
 
 export default function Historial() {
   const { esAdmin } = useAuth();
@@ -76,7 +77,7 @@ export default function Historial() {
   });
 
   const { pedirMotivo, dialogo } = useDialogoMotivo();
-  const [aviso, setAviso] = useState("");
+  const { avisar } = useAvisos();
 
   const anularLectura = useMutation({
     mutationFn: async ({ id, motivo }: { id: string; motivo: string }) => {
@@ -87,10 +88,10 @@ export default function Historial() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setAviso("Registro anulado");
+      avisar("Registro anulado");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setAviso(`No se pudo anular: ${e.message}`),
+    onError: (e: Error) => avisar(`No se pudo anular: ${e.message}`, "error"),
   });
 
   const anularPm = useMutation({
@@ -102,10 +103,10 @@ export default function Historial() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setAviso("Registro anulado");
+      avisar("Registro anulado");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setAviso(`No se pudo anular: ${e.message}`),
+    onError: (e: Error) => avisar(`No se pudo anular: ${e.message}`, "error"),
   });
 
   function decorarLectura(l: LecturaCalc) {
@@ -132,7 +133,6 @@ export default function Historial() {
       {dialogo}
       <h1>Historial</h1>
       <p className="subtitulo">Lecturas de horómetro y mantenimientos ejecutados.</p>
-      {aviso && <p className="nota">{aviso}</p>}
       <div className="barra-acciones">
         <button
           className={pestania === "lecturas" ? "" : "boton-secundario"}

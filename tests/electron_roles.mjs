@@ -10,7 +10,7 @@ const RAIZ = new URL("..", import.meta.url).pathname;
 const SALIDA = process.argv[2] ?? join(RAIZ, "capturas");
 const fixture = (n) => JSON.parse(readFileSync(join(RAIZ, "tests/fixtures", `${n}.json`), "utf8"));
 const TABLAS = ["v_control_pm", "v_control_40", "equipos", "componentes", "planes_mp", "cambios_horometro",
-  "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control"];
+  "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control", "v_registros_pm"];
 
 const MENU_ESPERADO = {
   admin: ["Control PM", "Rutina 40 h", "Gráficas", "Lecturas", "Registro PM", "Cambios horómetro", "Historial", "Equipos", "Plan MP", "Usuarios"],

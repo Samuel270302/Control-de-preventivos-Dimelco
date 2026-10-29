@@ -3,13 +3,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useParametros, usePlanes } from "../lib/queries";
 import type { PlanMp } from "../lib/types";
+import { useAvisos } from "../components/Avisos";
 
 export default function PlanMpPage() {
   const qc = useQueryClient();
   const { data: planes } = usePlanes();
   const { data: parametros } = useParametros();
   const [editando, setEditando] = useState<PlanMp | null>(null);
-  const [mensaje, setMensaje] = useState("");
+  const { avisar } = useAvisos();
 
   const guardar = useMutation({
     mutationFn: async (p: PlanMp) => {
@@ -29,10 +30,10 @@ export default function PlanMpPage() {
     },
     onSuccess: () => {
       setEditando(null);
-      setMensaje("Plan actualizado: el control se recalcula al instante");
+      avisar("Plan actualizado: el control se recalcula al instante");
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setMensaje(e.message),
+    onError: (e: Error) => avisar(e.message, "error"),
   });
 
   const guardarParam = useMutation({
@@ -50,7 +51,6 @@ export default function PlanMpPage() {
         El ciclo de gamas se lee de izquierda a derecha y vuelve a empezar al final. La clave del
         plan no se cambia: los componentes la referencian.
       </p>
-      {mensaje && <p className="nota">{mensaje}</p>}
       <div className="tabla-marco" style={{ marginBottom: 18 }}>
         <table>
           <thead>

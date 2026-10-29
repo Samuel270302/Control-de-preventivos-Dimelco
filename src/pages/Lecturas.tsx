@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth";
@@ -11,6 +11,8 @@ import {
 import { validarLectura, type ParamsValidacion } from "../lib/validacion";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
 import type { Componente, LecturaCalc, Turno } from "../lib/types";
+import { useAvisos } from "../components/Avisos";
+import { marcarPendientes } from "../lib/pendientes";
 
 export default function Lecturas() {
   const { session } = useAuth();
@@ -23,7 +25,22 @@ export default function Lecturas() {
   const [fecha, setFecha] = useState(hoyISO());
   const [turno, setTurno] = useState<Turno>("Dia");
   const [capturas, setCapturas] = useState<Record<string, string>>({});
-  const [mensaje, setMensaje] = useState("");
+  const nPendientes = Object.values(capturas).filter((v) => v.trim() !== "").length;
+  useEffect(() => {
+    marcarPendientes(nPendientes);
+  }, [nPendientes]);
+  useEffect(() => () => marcarPendientes(0), []);
+
+  // Enter pasa a la casilla siguiente, como en una planilla.
+  function siguienteCasilla(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const casillas = Array.from(document.querySelectorAll<HTMLInputElement>("input.casilla-lectura"));
+    const i = casillas.indexOf(e.currentTarget);
+    casillas[i + 1]?.focus();
+    casillas[i + 1]?.select();
+  }
+  const { avisar } = useAvisos();
 
   const p: ParamsValidacion = useMemo(() => {
     const v = (c: string, def: number) =>
@@ -97,10 +114,10 @@ export default function Lecturas() {
     },
     onSuccess: (n) => {
       setCapturas({});
-      setMensaje(`${n} lectura(s) grabada(s)`);
+      avisar(`${n} lectura(s) grabada(s)`);
       qc.invalidateQueries();
     },
-    onError: (e: Error) => setMensaje(e.message),
+    onError: (e: Error) => avisar(e.message, "error"),
   });
 
   return (
@@ -127,11 +144,6 @@ export default function Lecturas() {
               {grabar.isPending ? "Grabando…" : "Grabar lecturas"}
             </button>
           </div>
-          {mensaje && (
-            <div className="nota" style={{ alignSelf: "flex-end", paddingBottom: 10 }}>
-              {mensaje}
-            </div>
-          )}
         </div>
       </div>
       <div className="tabla-marco">
@@ -154,15 +166,17 @@ export default function Lecturas() {
               const texto = capturas[comp.id] ?? "";
               const res = texto.trim() !== "" ? validar(comp, texto) : null;
               return (
-                <tr key={comp.id}>
+                <tr key={comp.id} className={texto.trim() !== "" ? "fila-con-valor" : ""}>
                   <td>{equipo}</td>
                   <td>{comp.tipo_horometro}</td>
                   <td className="num">{u ? fNum(u.lectura) : "—sin lecturas—"}</td>
                   <td>{u ? `${fFecha(u.fecha)} ${u.turno}` : ""}</td>
                   <td className="num">
                     <input
+                      className="casilla-lectura"
                       style={{ width: 110, textAlign: "right" }}
                       value={texto}
+                      onKeyDown={siguienteCasilla}
                       onChange={(e) => setCapturas({ ...capturas, [comp.id]: e.target.value })}
                     />
                   </td>

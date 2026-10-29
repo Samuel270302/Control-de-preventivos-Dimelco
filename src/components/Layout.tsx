@@ -1,6 +1,10 @@
-import { NavLink } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { supabase } from "../lib/supabase";
+import { useEstadoConexion } from "../lib/conexion";
+import { lecturasPendientes, marcarPendientes } from "../lib/pendientes";
+import DialogoConfirmar from "./DialogoConfirmar";
 import {
   IconoCalendario,
   IconoCamion,
@@ -35,6 +39,16 @@ const enlacesAdmin = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { perfil, esAdmin, puedeCapturar } = useAuth();
+  const conexion = useEstadoConexion();
+  const navegar = useNavigate();
+  const [destino, setDestino] = useState<string | null>(null);
+
+  function alNavegar(e: React.MouseEvent, a: string) {
+    if (lecturasPendientes() > 0) {
+      e.preventDefault();
+      setDestino(a);
+    }
+  }
   return (
     <div className="app">
       <aside className="menu">
@@ -45,7 +59,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
         <nav>
           {enlaces.filter((e) => puedeCapturar || !e.captura).map((e) => (
-            <NavLink key={e.a} to={e.a} className={({ isActive }) => (isActive ? "activo" : "")}>
+            <NavLink key={e.a} to={e.a} onClick={(ev) => alNavegar(ev, e.a)} className={({ isActive }) => (isActive ? "activo" : "")}>
               {e.icono}
               {e.texto}
             </NavLink>
@@ -54,7 +68,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <>
               <div className="menu-seccion">Administración</div>
               {enlacesAdmin.map((e) => (
-                <NavLink key={e.a} to={e.a} className={({ isActive }) => (isActive ? "activo" : "")}>
+                <NavLink key={e.a} to={e.a} onClick={(ev) => alNavegar(ev, e.a)} className={({ isActive }) => (isActive ? "activo" : "")}>
                   {e.icono}
                   {e.texto}
                 </NavLink>
@@ -70,9 +84,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <button className="boton-plano" onClick={() => supabase().auth.signOut()}>
             Cerrar sesión
           </button>
+          <div className="pie-estado">
+            <span className={`punto-conexion ${conexion}`} />
+            {conexion === "en_linea" ? "En línea" : conexion === "reconectando" ? "Reconectando…" : "Sin conexión"}
+            <span className="pie-version">v{__APP_VERSION__}</span>
+          </div>
         </div>
       </aside>
       <main className="contenido">{children}</main>
+      {destino && (
+        <DialogoConfirmar
+          titulo="Hay lecturas sin grabar"
+          texto={`Escribiste ${lecturasPendientes()} lectura(s) que todavía no se grabaron. Si sales de la pantalla se pierden.`}
+          confirmar="Salir sin grabar"
+          onRespuesta={(si) => {
+            const a = destino;
+            setDestino(null);
+            if (si) {
+              marcarPendientes(0);
+              navegar(a);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
