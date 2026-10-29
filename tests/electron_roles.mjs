@@ -3,6 +3,10 @@
 import { createRequire } from "node:module";
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+const sh = promisify(execFile);
+const BD = process.env.BD_LOCAL ?? "host=/home/user/.pgrun port=5433 user=dev dbname=hemco";
 const require = createRequire(import.meta.url);
 const { _electron } = require("/opt/node-tools/node_modules/playwright/index.js");
 
@@ -35,11 +39,18 @@ async function probarRol(rol) {
   });
   const ctx = app.context();
   const escrituras = [];
-  await ctx.route("**/rest/v1/**", (route) => {
+  await ctx.route("**/rest/v1/**", async (route) => {
     const req = route.request(); const url = new URL(req.url());
     const tabla = url.pathname.split("/rest/v1/")[1];
     if (req.method() !== "GET") {
       escrituras.push(`${req.method()} ${tabla}`);
+      if (tabla === "rpc/validar_lectura") {
+        // El control de lecturas se resuelve con la función real de la base local.
+        const a = JSON.parse(req.postData());
+        const { stdout } = await sh("psql", [BD, "-tAc",
+          `select validar_lectura('${a.p_componente}', '${a.p_fecha}', '${a.p_turno}', ${Number(a.p_lectura)})`]);
+        return route.fulfill({ status: 200, contentType: "application/json", body: stdout.trim() || "null" });
+      }
       if (tabla.startsWith("rpc/")) return route.fulfill({ status: 200, contentType: "application/json", body: "null" });
       return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify([{ id: "nuevo" }]) });
     }
@@ -120,12 +131,17 @@ async function probarRol(rol) {
     const fila = win.locator("tbody tr", { hasText: "Scooptram #5" }).first();
     const ultima = Number(((await fila.locator("td").nth(2).textContent()) ?? "0").replace(/,/g, ""));
     const caja = fila.locator("input");
-    const probar = async (v) => { await caja.fill(String(v)); await win.waitForTimeout(250); return (await fila.locator("td").last().textContent()) ?? ""; };
+    const probar = async (v) => { await caja.fill(String(v)); await win.waitForTimeout(700); return (await fila.locator("td").last().textContent()) ?? ""; };
     r("Lecturas: lectura normal = OK", (await probar(ultima + 8)) === "OK", `última ${ultima}`);
-    r("Lecturas: baja de 1 h avisa error de digitación", (await probar(ultima - 1)).startsWith("Lectura menor"));
-    r("Lecturas: baja de 50 h se marca como horas imposibles (regla del libro)", (await probar(ultima - 50)).startsWith("Horas imposibles"));
-    r("Lecturas: contador nuevo en 5 h avisa cambio de horómetro", (await probar(5)).startsWith("Cambio de horómetro"));
+    r("Lecturas: baja de 1 h avisa posible digitación", (await probar(ultima - 1)).startsWith("Lectura menor a la anterior"));
+    const baja = await probar(ultima - 50);
+    r("Lecturas: baja de 50 h se rechaza y pide registrar el cambio", baja.startsWith("Lectura 50 h menor") && baja.includes("Cambios horómetro"), baja);
+    r("Lecturas: contador nuevo en 5 h se rechaza sin cambio registrado", (await probar(5)).includes("registre primero el cambio"));
     r("Lecturas: 500 h en un turno = horas imposibles", (await probar(ultima + 500)).startsWith("Horas imposibles"));
+    await caja.fill("1"); await win.waitForTimeout(600);
+    await win.getByRole("button", { name: "Grabar lecturas" }).click(); await win.waitForTimeout(500);
+    r("Lecturas: con error no se graba", !escrituras.includes("POST lecturas") &&
+      (await win.locator(".aviso-texto").allTextContents()).join(" ").includes("menor que la anterior"));
     await win.locator('input[type="date"]').fill("2026-10-12"); await win.locator("select").first().selectOption("Noche");
     r("Lecturas: turno ya registrado = duplicado", (await probar(ultima + 1)).startsWith("Duplicado"));
     await win.locator("select").first().selectOption("Dia");

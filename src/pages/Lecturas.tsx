@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth";
@@ -6,13 +6,17 @@ import {
   useComponentes,
   useEquipos,
   useLecturasRecientes,
-  useParametros,
 } from "../lib/queries";
-import { validarLectura, type ParamsValidacion } from "../lib/validacion";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
 import type { Componente, LecturaCalc, Turno } from "../lib/types";
 import { useAvisos } from "../components/Avisos";
 import { marcarPendientes } from "../lib/pendientes";
+
+interface Validacion {
+  clave: string;
+  nivel: "ok" | "aviso" | "error";
+  mensaje: string;
+}
 
 export default function Lecturas() {
   const { session } = useAuth();
@@ -20,7 +24,6 @@ export default function Lecturas() {
   const { data: equipos } = useEquipos();
   const { data: componentes } = useComponentes();
   const { data: recientes } = useLecturasRecientes(1500);
-  const { data: parametros } = useParametros();
 
   const [fecha, setFecha] = useState(hoyISO());
   const [turno, setTurno] = useState<Turno>("Dia");
@@ -42,15 +45,60 @@ export default function Lecturas() {
   }
   const { avisar } = useAvisos();
 
-  const p: ParamsValidacion = useMemo(() => {
-    const v = (c: string, def: number) =>
-      Number(parametros?.find((x) => x.clave === c)?.valor ?? def);
-    return {
-      maxHorasTurno: v("max_horas_turno", 12),
-      umbralCambio: v("umbral_cambio_horometro", 2),
-      huecoTurnos: v("hueco_turnos", 14),
+  // El control vive en la base (validar_lectura): la pantalla lo consulta mientras se
+  // escribe y la base lo vuelve a aplicar al grabar. Se guarda por fila con la clave
+  // de lo consultado para no repetir consultas de filas que no cambiaron.
+  const [validaciones, setValidaciones] = useState<Record<string, Validacion>>({});
+  const cache = useRef(new Map<string, Validacion>());
+  const claveDe = (id: string, texto: string) => `${id}|${fecha}|${turno}|${texto.trim()}`;
+
+  useEffect(() => {
+    let vigente = true;
+    const t = setTimeout(async () => {
+      const res: Record<string, Validacion> = {};
+      await Promise.all(
+        Object.entries(capturas)
+          .filter(([, texto]) => texto.trim() !== "")
+          .map(async ([id, texto]) => {
+            const clave = claveDe(id, texto);
+            const lect = Number(texto.replace(",", "."));
+            if (isNaN(lect)) {
+              res[id] = { clave, nivel: "error", mensaje: "Escriba un número" };
+              return;
+            }
+            const guardada = cache.current.get(clave);
+            if (guardada) {
+              res[id] = guardada;
+              return;
+            }
+            const { data, error } = await supabase().rpc("validar_lectura", {
+              p_componente: id,
+              p_fecha: fecha,
+              p_turno: turno,
+              p_lectura: lect,
+            });
+            const v: Validacion = error
+              ? { clave, nivel: "aviso", mensaje: "No se pudo validar: revise la conexión" }
+              : { clave, ...(data as { nivel: Validacion["nivel"]; mensaje: string }) };
+            if (!error) cache.current.set(clave, v);
+            res[id] = v;
+          })
+      );
+      if (vigente) setValidaciones(res);
+    }, 350);
+    return () => {
+      vigente = false;
+      clearTimeout(t);
     };
-  }, [parametros]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [capturas, fecha, turno]);
+
+  function validacionDe(id: string): Validacion | "validando" | null {
+    const texto = capturas[id] ?? "";
+    if (texto.trim() === "") return null;
+    const v = validaciones[id];
+    return v && v.clave === claveDe(id, texto) ? v : "validando";
+  }
 
   const porComponente = useMemo(() => {
     const m = new Map<string, LecturaCalc[]>();
@@ -78,22 +126,17 @@ export default function Lecturas() {
     return porComponente.get(c.id)?.[0];
   }
 
-  function validar(c: Componente, texto: string) {
-    const lect = parseFloat(texto);
-    if (isNaN(lect)) return null;
-    return validarLectura(fecha, turno, lect, porComponente.get(c.id) ?? [], p);
-  }
-
   const grabar = useMutation({
     mutationFn: async () => {
       const inserciones: { comp: Componente; lectura: number }[] = [];
       for (const { comp } of filas) {
         const texto = capturas[comp.id];
         if (!texto || texto.trim() === "") continue;
-        const lect = parseFloat(texto);
+        const lect = Number(texto.replace(",", "."));
         if (isNaN(lect)) throw new Error(`Lectura inválida en ${comp.nombre}`);
-        const res = validar(comp, texto);
-        if (res?.nivel === "error") throw new Error(`${comp.nombre}: ${res.control}`);
+        const res = validacionDe(comp.id);
+        if (res === "validando") throw new Error("Espere a que termine la validación de las lecturas");
+        if (res?.nivel === "error") throw new Error(`${comp.nombre}: ${res.mensaje}`);
         inserciones.push({ comp, lectura: lect });
       }
       if (inserciones.length === 0) throw new Error("No hay lecturas para grabar");
@@ -114,6 +157,7 @@ export default function Lecturas() {
     },
     onSuccess: (n) => {
       setCapturas({});
+      cache.current.clear();
       avisar(`${n} lectura(s) grabada(s)`);
       qc.invalidateQueries();
     },
@@ -164,7 +208,7 @@ export default function Lecturas() {
             {filas.map(({ comp, equipo }) => {
               const u = ultima(comp);
               const texto = capturas[comp.id] ?? "";
-              const res = texto.trim() !== "" ? validar(comp, texto) : null;
+              const res = validacionDe(comp.id);
               return (
                 <tr key={comp.id} className={texto.trim() !== "" ? "fila-con-valor" : ""}>
                   <td>{equipo}</td>
@@ -181,10 +225,10 @@ export default function Lecturas() {
                     />
                   </td>
                   <td>
-                    {res && (
-                      <span className={`control-${res.nivel === "ok" ? "ok" : res.nivel}`}>
-                        {res.control}
-                      </span>
+                    {res === "validando" ? (
+                      <span className="nota">Validando…</span>
+                    ) : (
+                      res && <span className={`control-${res.nivel}`}>{res.mensaje}</span>
                     )}
                   </td>
                 </tr>

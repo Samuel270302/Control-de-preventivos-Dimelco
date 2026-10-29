@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { borrarConexion } from "../lib/config";
 import logo from "../assets/logo-dimelco.png";
+import logoApp from "../assets/logo-app.svg";
 
 export default function Login() {
   const [correo, setCorreo] = useState("");
@@ -24,8 +25,13 @@ export default function Login() {
   return (
     <div className="pantalla-centro">
       <form className="tarjeta" onSubmit={entrar}>
-        <img className="logo-login" src={logo} alt="Dimelco" />
-        <h1>Preventivos HEMCO</h1>
+        <div className="login-marca">
+          <img src={logoApp} alt="" />
+          <div>
+            <div className="login-titulo">Preventivos</div>
+            <div className="login-sub">HEMCO · mantenimiento</div>
+          </div>
+        </div>
         <label className="campo">
           <span>Correo</span>
           <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)} autoFocus />
@@ -49,6 +55,7 @@ export default function Login() {
         >
           Cambiar conexión a la base
         </button>
+        <img className="logo-login" src={logo} alt="Dimelco" />
       </form>
     </div>
   );

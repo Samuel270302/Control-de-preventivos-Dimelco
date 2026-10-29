@@ -67,12 +67,15 @@ def main():
         delete from registros_pm; delete from cambios_horometro;
         delete from componentes; delete from equipos; delete from planes_mp;
     """)
-    # El histórico del libro trae registros PM que el control de lecturas rechazaría;
+    # El histórico del libro trae lecturas y registros PM que los controles rechazarían;
     # se carga tal cual y el control vuelve a quedar activo al terminar.
     cur.execute("""
         do $$ begin
           if exists (select 1 from pg_trigger where tgname = 'validar_registro_pm') then
             alter table registros_pm disable trigger validar_registro_pm;
+          end if;
+          if exists (select 1 from pg_trigger where tgname = 'validar_lectura') then
+            alter table lecturas disable trigger validar_lectura;
           end if;
         end $$;
     """)
@@ -286,6 +289,9 @@ def main():
         do $$ begin
           if exists (select 1 from pg_trigger where tgname = 'validar_registro_pm') then
             alter table registros_pm enable trigger validar_registro_pm;
+          end if;
+          if exists (select 1 from pg_trigger where tgname = 'validar_lectura') then
+            alter table lecturas enable trigger validar_lectura;
           end if;
         end $$;
     """)

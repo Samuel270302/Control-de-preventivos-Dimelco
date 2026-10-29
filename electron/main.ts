@@ -58,6 +58,7 @@ function createWindow() {
     minHeight: 700,
     backgroundColor: "#111518",
     title: "Preventivos HEMCO",
+    icon: path.join(__dirname, "../dist/icono.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
