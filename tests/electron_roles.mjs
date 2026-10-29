@@ -220,6 +220,7 @@ async function probarRol(rol) {
     r("Lecturas: baja de 1 h avisa posible digitación", (await probar(ultima - 1)).startsWith("Lectura menor a la anterior"));
     const baja = await probar(ultima - 50);
     r("Lecturas: baja de 50 h se rechaza y pide registrar el cambio", baja.startsWith("Lectura 50 h menor") && baja.includes("Cambios horómetro"), baja);
+    if (rol === "admin") await win.screenshot({ path: join(SALIDA, "f11_lecturas.png") });
     r("Lecturas: contador nuevo en 5 h se rechaza sin cambio registrado", (await probar(5)).includes("registre primero el cambio"));
     r("Lecturas: 500 h en un turno = horas imposibles", (await probar(ultima + 500)).startsWith("Horas imposibles"));
     await caja.fill("1"); await win.waitForTimeout(600);
