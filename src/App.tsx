@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { leerConexion } from "./lib/config";
+import { supabase } from "./lib/supabase";
 import { AuthProvider, useAuth } from "./auth";
 import { useTiempoReal } from "./lib/queries";
 import Layout from "./components/Layout";
@@ -18,10 +19,28 @@ import PlanMpPage from "./pages/PlanMp";
 import Usuarios from "./pages/Usuarios";
 
 function Interior() {
-  const { session, cargando, esAdmin, puedeCapturar } = useAuth();
+  const { session, perfil, cargando, esAdmin, puedeCapturar } = useAuth();
   if (cargando) return <div className="pantalla-centro">Cargando…</div>;
   if (!session) return <Login />;
+  if (!perfil?.activo) return <AccesoPendiente correo={session.user.email ?? ""} />;
   return <ConRealtime esAdmin={esAdmin} puedeCapturar={puedeCapturar} />;
+}
+
+function AccesoPendiente({ correo }: { correo: string }) {
+  return (
+    <div className="pantalla-centro">
+      <div className="tarjeta">
+        <h1>Acceso pendiente de activación</h1>
+        <p className="nota" style={{ marginBottom: 14 }}>
+          La cuenta {correo} existe, pero un administrador todavía no la activa ni le asigna rol.
+          Pídele al administrador que la active en la pantalla Usuarios.
+        </p>
+        <button className="boton-plano" style={{ width: "100%" }} onClick={() => supabase().auth.signOut()}>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function ConRealtime({ esAdmin, puedeCapturar }: { esAdmin: boolean; puedeCapturar: boolean }) {

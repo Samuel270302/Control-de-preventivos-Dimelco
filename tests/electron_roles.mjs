@@ -26,7 +26,8 @@ const RUTAS = [
 const resultados = [];
 async function probarRol(rol) {
   const datos = Object.fromEntries(TABLAS.map((n) => [n, fixture(n)]));
-  datos.perfiles = datos.perfiles.map((p) => ({ ...p, rol }));
+  datos.perfiles = datos.perfiles.map((p) =>
+    rol === "inactivo" ? { ...p, rol: "invitado", activo: false } : { ...p, rol, activo: true });
   const r = (nombre, cond, detalle = "") => resultados.push({ rol, nombre, ok: !!cond, detalle });
   const app = await _electron.launch({
     executablePath: join(RAIZ, "node_modules/electron/dist/electron"),
@@ -67,6 +68,13 @@ async function probarRol(rol) {
       user: { id: "00000000-0000-0000-0000-000000000001", email: "demo@hemco.local", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() } }));
   });
   await win.reload(); await win.waitForTimeout(2500);
+  if (rol === "inactivo") {
+    const h1 = (await win.locator("h1").first().textContent()) ?? "";
+    r("usuario inactivo ve acceso pendiente y ningún menú", h1.startsWith("Acceso pendiente") && (await win.locator(".menu").count()) === 0, h1);
+    r("sin errores de JavaScript", errores.length === 0, errores.slice(0, 2).join(" | "));
+    await app.close();
+    return;
+  }
   const ir = async (h) => { await win.evaluate((x) => { location.hash = x; }, h); await win.waitForTimeout(1300); };
 
   // Menú
@@ -150,7 +158,7 @@ async function probarRol(rol) {
   await app.close();
 }
 
-for (const rol of ["admin", "capturador", "invitado"]) await probarRol(rol);
+for (const rol of ["admin", "capturador", "invitado", "inactivo"]) await probarRol(rol);
 writeFileSync(join(SALIDA, "resultados_roles.json"), JSON.stringify(resultados, null, 1));
 for (const x of resultados) console.log(`${x.ok ? "OK   " : "FALLA"} [${x.rol}] ${x.nombre}${x.detalle ? " · " + x.detalle : ""}`);
 console.log(`\n${resultados.filter((x) => x.ok).length}/${resultados.length} verificaciones OK`);
