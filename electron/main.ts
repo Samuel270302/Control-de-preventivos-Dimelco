@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
+import { autoUpdater } from "electron-updater";
 
 // El renderer no puede abrir ventanas nuevas (ver setWindowOpenHandler); los
 // reportes se convierten a PDF aquí, en una ventana oculta sin JavaScript.
@@ -93,8 +94,40 @@ function createWindow() {
   });
 }
 
+// F9 · Actualización automática desde los releases de GitHub (latest.yml).
+// Descarga en segundo plano; la app avisa y el usuario decide cuándo reiniciar.
+// Sin el instalador empaquetado (desarrollo, pruebas) no se busca nada.
+const CADA_4_HORAS = 4 * 60 * 60 * 1000;
+let versionLista: string | null = null;
+
+function avisarActualizacion() {
+  if (!versionLista) return;
+  for (const w of BrowserWindow.getAllWindows()) w.webContents.send("actualizacion-lista", versionLista);
+}
+
+function iniciarActualizaciones() {
+  if (!app.isPackaged) return;
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.on("update-downloaded", (info) => {
+    versionLista = info.version;
+    avisarActualizacion();
+  });
+  autoUpdater.on("error", (e) => console.error("Actualización:", e?.message ?? e));
+  const buscar = () => autoUpdater.checkForUpdates().catch((e) => console.error("Actualización:", e?.message ?? e));
+  buscar();
+  setInterval(buscar, CADA_4_HORAS);
+}
+
+ipcMain.handle("version-lista", () => versionLista);
+ipcMain.handle("instalar-actualizacion", () => {
+  // quitAndInstall cierra la ventana: si hay lecturas sin grabar, la app pregunta antes.
+  autoUpdater.quitAndInstall(false, true);
+});
+
 app.whenReady().then(() => {
   createWindow();
+  iniciarActualizaciones();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

@@ -2,7 +2,9 @@ name: Mantenimiento de la base
 
 # Todos los días: una consulta real a la base para que Supabase (plan Free)
 # no pause el proyecto por inactividad.
-# Domingos: respaldo completo, guardado en la rama "respaldos" del repositorio.
+# Domingos: respaldo completo, cifrado con gpg (AES-256) usando como frase el mismo
+# secreto SUPABASE_DB_URL, y guardado en la rama "respaldos" del repositorio.
+# El repositorio es público: nunca se sube un respaldo sin cifrar.
 # Requiere el secreto SUPABASE_DB_URL (cadena de conexión del pooler en modo sesión, puerto 5432).
 
 on:
@@ -64,6 +66,16 @@ jobs:
             --table=auth.users --table=auth.identities \
             | gzip -9 > "salida/${FECHA}_usuarios.sql.gz"
           gzip -t salida/*.gz
+          for f in salida/*.gz; do
+            printf '%s' "$DB_URL" | gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 0 \
+              --symmetric --cipher-algo AES256 --output "$f.gpg" "$f"
+            rm "$f"
+          done
+          # Comprobación: cada archivo cifrado se descifra y el gzip resultante es válido.
+          for f in salida/*.gpg; do
+            printf '%s' "$DB_URL" | gpg --batch --quiet --pinentry-mode loopback --passphrase-fd 0 -d "$f" | gzip -t
+          done
+          if ls salida | grep -qv '\.gpg$'; then echo "::error::Quedó un archivo sin cifrar"; exit 1; fi
           ls -la salida
 
       - name: Guardar respaldo en la rama "respaldos"
@@ -80,20 +92,28 @@ jobs:
           if git ls-remote --exit-code --heads origin respaldos > /dev/null; then
             git fetch -q --depth=1 origin respaldos
             git checkout -q -b respaldos FETCH_HEAD
+            if git ls-files | grep -q '\.sql\.gz$'; then
+              echo "::error::La rama respaldos guarda respaldos sin cifrar de versiones anteriores. Bórrela en GitHub (Branches) y vuelva a ejecutar este flujo."
+              exit 1
+            fi
           else
             git checkout -q --orphan respaldos
             cat > README.md <<'EOF'
-          # Respaldos de la base de datos
+          # Respaldos de la base de datos (cifrados)
 
           Generados cada domingo por el flujo "Mantenimiento de la base".
-          Cada carpeta tiene dos archivos:
-          - AAAA-MM-DD_public.sql.gz: tablas de la app con estructura y datos.
-          - AAAA-MM-DD_usuarios.sql.gz: usuarios de inicio de sesión (auth.users y auth.identities).
+          Cada carpeta tiene dos archivos cifrados con gpg (AES-256):
+          - AAAA-MM-DD_public.sql.gz.gpg: tablas de la app con estructura y datos.
+          - AAAA-MM-DD_usuarios.sql.gz.gpg: usuarios de inicio de sesión (auth.users y auth.identities).
+
+          La frase de cifrado es el valor completo del secreto SUPABASE_DB_URL
+          (está en SECRETO_GITHUB.txt, que guarda el administrador).
 
           Restaurar en un proyecto Supabase nuevo y vacío:
-          1. gunzip -c AAAA-MM-DD_usuarios.sql.gz | psql "<cadena de conexión>"
-          2. gunzip -c AAAA-MM-DD_public.sql.gz | psql "<cadena de conexión>"
+          1. gpg -d AAAA-MM-DD_usuarios.sql.gz.gpg | gunzip | psql "<cadena de conexión>"
+          2. gpg -d AAAA-MM-DD_public.sql.gz.gpg | gunzip | psql "<cadena de conexión>"
           3. Aplicar supabase/migrations/002_rls.sql y 004_columnas_rls.sql del repositorio (políticas y tiempo real).
+          gpg pide la frase al descifrar.
           EOF
           fi
           mkdir -p "$FECHA"

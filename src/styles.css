@@ -513,3 +513,7 @@ dialog.dialogo-ancho { width: min(1100px, 94vw); }
 .pila-tablas > div { margin-bottom: 16px; }
 .menu-pie .boton-plano { display: block; width: 100%; }
 .menu-pie .boton-plano + .boton-plano { margin-top: 6px; }
+
+/* F9 · aviso de actualización descargada */
+.aviso-actualizacion { display: flex; align-items: center; gap: 14px; background: var(--ambar-suave); border: 1px solid #e6c65c; border-left: 4px solid var(--ambar); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 13px; }
+.aviso-actualizacion span { flex: 1; }

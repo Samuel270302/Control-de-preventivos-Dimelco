@@ -6,6 +6,7 @@ import { useEstadoConexion } from "../lib/conexion";
 import { lecturasPendientes, marcarPendientes } from "../lib/pendientes";
 import DialogoConfirmar from "./DialogoConfirmar";
 import DialogoContrasena from "./DialogoContrasena";
+import AvisoActualizacion from "./AvisoActualizacion";
 import { useAvisos } from "./Avisos";
 import {
   IconoCalendario,
@@ -132,7 +133,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </aside>
-      <main className="contenido">{children}</main>
+      <main className="contenido">
+        <AvisoActualizacion />
+        {children}
+      </main>
       {destino && (
         <DialogoConfirmar
           titulo="Hay lecturas sin grabar"

@@ -278,6 +278,11 @@ async function probarRol(rol) {
   const desborde = await win.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   r("Ventana mínima 1100×700 sin scroll horizontal de la página", !desborde);
   await win.screenshot({ path: join(SALIDA, `rol_${rol}_1100.png`) });
+  // F9: aviso cuando la versión nueva ya se descargó
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send("actualizacion-lista", "0.4.1"));
+  await win.waitForTimeout(300);
+  r("F9: aviso de versión lista para instalar", ((await win.locator(".aviso-actualizacion").textContent({ timeout: 3000 })) ?? "").includes("0.4.1"));
+  if (rol === "admin") await win.screenshot({ path: join(SALIDA, "f9_aviso.png") });
   r("sin errores de JavaScript", errores.length === 0, errores.slice(0, 2).join(" | "));
   await app.close();
 }
