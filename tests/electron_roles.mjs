@@ -30,6 +30,8 @@ const RUTAS = [
 const resultados = [];
 async function probarRol(rol) {
   const datos = Object.fromEntries(TABLAS.map((n) => [n, fixture(n)]));
+  datos.perfiles = [...datos.perfiles, { user_id: "00000000-0000-0000-0000-000000000002", nombre: "Planeador Martha 850",
+    correo: "planeador.martha@hemco.local", rol: "capturador", activo: true }];
   // Una lectura anulada por el admin para ver la auditoría en el Historial.
   const base = datos.v_lecturas.find((l) => l.fecha >= "2026-10-01");
   datos.lecturas = [{ ...base, id: "anulada-1", anulada: true, creado_por: null, origen: "app",
@@ -76,7 +78,19 @@ async function probarRol(rol) {
     const objeto = (req.headers()["accept"] ?? "").includes("pgrst.object");
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(objeto ? (filas[0] ?? null) : filas) });
   });
-  await ctx.route("**/auth/v1/**", (rt) => rt.fulfill({ status: 200, contentType: "application/json", body: "{}" }));
+  await ctx.route("**/auth/v1/**", (rt) => {
+    if (rt.request().method() === "PUT") {
+      escrituras.push(`PUT auth ${rt.request().postData()}`);
+      // Supabase responde con el usuario completo
+      return rt.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "00000000-0000-0000-0000-000000000001",
+        email: "demo@hemco.local", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-10-01T00:00:00Z" }) });
+    }
+    return rt.fulfill({ status: 200, contentType: "application/json", body: "{}" });
+  });
+  await ctx.route("**/functions/v1/**", (rt) => {
+    escrituras.push(`FUNC ${rt.request().postData()}`);
+    return rt.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
+  });
   await ctx.route("**/realtime/**", (rt) => rt.abort());
 
   const win = await app.firstWindow();
@@ -226,9 +240,33 @@ async function probarRol(rol) {
     r("Cambios: propone offset = última vieja + previo − inicial", /Offset propuesto: 1,350 h|Offset propuesto: [\d,.]+ h/.test(nota), nota.match(/Offset propuesto: [^ ]+ h/)?.[0] ?? nota);
     r("Cambios: botón Validar solo admin", true);
   }
+  // F7: cambio de contraseña propio, para todos los roles
+  await win.getByRole("button", { name: "Cambiar contraseña" }).click(); await win.waitForTimeout(300);
+  const dlgClave = win.locator("dialog[open]");
+  await dlgClave.locator("input").nth(0).fill("NuevaClave2026");
+  await dlgClave.locator("input").nth(1).fill("NuevaClave2025");
+  r("F7: avisa si las contraseñas no coinciden", (await dlgClave.getByRole("button", { name: "Cambiar" }).isDisabled()) && ((await dlgClave.textContent()) ?? "").includes("no coinciden"));
+  await dlgClave.locator("input").nth(1).fill("NuevaClave2026");
+  await dlgClave.getByRole("button", { name: "Cambiar" }).click(); await win.waitForTimeout(800);
+  r("F7: cambio de contraseña propio", escrituras.some((e) => e.startsWith("PUT auth") && e.includes("NuevaClave2026")) && (await win.locator("dialog[open]").count()) === 0);
   if (rol === "admin") {
     await ir("#/usuarios");
-    r("Usuarios: el rol propio no se puede cambiar", await win.locator("tbody tr select").first().isDisabled());
+    await win.locator('label:has-text("Nuevo usuario: nombre") input').fill("Planeador turno B");
+    await win.locator('label:has-text("Correo") input').fill("planeador.b@hemco.local");
+    await win.locator('label:has-text("Contraseña inicial") input').fill("Clave1234");
+    await win.screenshot({ path: join(SALIDA, "f7_usuarios.png") });
+    await win.getByRole("button", { name: "Crear usuario" }).click(); await win.waitForTimeout(800);
+    const alta = escrituras.find((e) => e.startsWith("FUNC") && e.includes('"crear"')) ?? "";
+    r("F7: alta de usuario llama a la función con los datos", alta.includes("planeador.b@hemco.local") && alta.includes('"rol":"capturador"'), alta.slice(0, 120));
+    r("F7: el formulario se limpia tras crear", (await win.locator('label:has-text("Correo") input').inputValue()) === "");
+    r("Usuarios: el rol propio no se puede cambiar", await win.locator("tbody tr", { hasText: "demo@hemco.local" }).locator("select").isDisabled());
+    const filaMartha = win.locator("tbody tr", { hasText: "planeador.martha@hemco.local" });
+    await filaMartha.getByRole("button", { name: "Restablecer contraseña" }).click(); await win.waitForTimeout(300);
+    const dlgR = win.locator("dialog[open]");
+    await dlgR.locator("input").nth(0).fill("ClaveNueva99"); await dlgR.locator("input").nth(1).fill("ClaveNueva99");
+    await dlgR.getByRole("button", { name: "Restablecer" }).click(); await win.waitForTimeout(800);
+    r("F7: restablecer contraseña de otro usuario", escrituras.some((e) => e.startsWith("FUNC") && e.includes('"restablecer"') && e.includes("00000000-0000-0000-0000-000000000002")));
+    r("F7: sin botón de restablecer para la cuenta propia", (await win.locator("tbody tr", { hasText: "demo@hemco.local" }).getByRole("button", { name: "Restablecer contraseña" }).count()) === 0);
     await ir("#/equipos");
     r("Equipos: formularios de alta presentes", (await win.getByRole("button", { name: "Crear equipo" }).count()) === 1 && (await win.getByRole("button", { name: "Crear componente" }).count()) === 1);
   }

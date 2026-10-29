@@ -511,3 +511,5 @@ dialog.dialogo-ancho { width: min(1100px, 94vw); }
 .fila-tablas-ficha > div { min-width: 0; }
 .fila-tablas-ficha .tabla-marco { overflow-x: auto; }
 .pila-tablas > div { margin-bottom: 16px; }
+.menu-pie .boton-plano { display: block; width: 100%; }
+.menu-pie .boton-plano + .boton-plano { margin-top: 6px; }

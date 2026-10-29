@@ -5,6 +5,8 @@ import { supabase } from "../lib/supabase";
 import { useEstadoConexion } from "../lib/conexion";
 import { lecturasPendientes, marcarPendientes } from "../lib/pendientes";
 import DialogoConfirmar from "./DialogoConfirmar";
+import DialogoContrasena from "./DialogoContrasena";
+import { useAvisos } from "./Avisos";
 import {
   IconoCalendario,
   IconoCamion,
@@ -46,6 +48,26 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const conexion = useEstadoConexion();
   const navegar = useNavigate();
   const [destino, setDestino] = useState<string | null>(null);
+  const [cambiandoClave, setCambiandoClave] = useState(false);
+  const [guardandoClave, setGuardandoClave] = useState(false);
+  const { avisar } = useAvisos();
+
+  async function cambiarClave(contrasena: string) {
+    setGuardandoClave(true);
+    const { error } = await supabase().auth.updateUser({ password: contrasena });
+    setGuardandoClave(false);
+    if (error) {
+      avisar(
+        error.message.includes("different from the old")
+          ? "La contraseña nueva debe ser distinta de la actual"
+          : `No se pudo cambiar la contraseña: ${error.message}`,
+        "error"
+      );
+      return;
+    }
+    setCambiandoClave(false);
+    avisar("Contraseña cambiada");
+  }
 
   function alNavegar(e: React.MouseEvent, a: string) {
     if (lecturasPendientes() > 0) {
@@ -55,6 +77,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }
   return (
     <div className="app">
+      {cambiandoClave && (
+        <DialogoContrasena
+          titulo="Cambiar mi contraseña"
+          detalle={perfil?.correo ?? undefined}
+          boton="Cambiar"
+          ocupado={guardandoClave}
+          onAceptar={cambiarClave}
+          onCerrar={() => setCambiandoClave(false)}
+        />
+      )}
       <aside className="menu">
         <div className="logo">
           <img className="logo-app" src={logoApp} alt="" />
@@ -87,6 +119,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div>{perfil?.nombre ?? "…"}</div>
             <div className="usuario-rol">{perfil ? NOMBRE_ROL[perfil.rol] : ""}</div>
           </div>
+          <button className="boton-plano" onClick={() => setCambiandoClave(true)}>
+            Cambiar contraseña
+          </button>
           <button className="boton-plano" onClick={() => supabase().auth.signOut()}>
             Cerrar sesión
           </button>
