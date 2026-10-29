@@ -145,3 +145,38 @@ export async function exportarRegistrosPm(
     ]);
   await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
 }
+
+export interface FilaPrograma {
+  grupo: string;
+  fecha: string | null;
+  equipo: string;
+  componente: string;
+  tipo: string;
+  gama: string;
+  meta: number | null;
+  faltantes: number | null;
+  estado: string;
+}
+
+export async function exportarPrograma(filas: FilaPrograma[], nombreArchivo: string) {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Programa 4 semanas");
+  ws.columns = [
+    { header: "Semana", width: 26 },
+    { header: "Fecha estimada", width: 14 },
+    { header: "Equipo", width: 16 },
+    { header: "Componente", width: 34 },
+    { header: "Tipo", width: 12 },
+    { header: "Gama", width: 9 },
+    { header: "Meta (acum.)", width: 12 },
+    { header: "Hrs faltantes", width: 12 },
+    { header: "Estado", width: 20 },
+  ];
+  ws.getRow(1).font = { bold: true };
+  for (const f of filas) {
+    const fila = ws.addRow([f.grupo, fFecha(f.fecha), f.equipo, f.componente, f.tipo, f.gama, f.meta, f.faltantes, f.estado]);
+    const color = COLOR_ESTADO[f.estado];
+    if (color) fila.getCell(9).fill = { type: "pattern", pattern: "solid", fgColor: { argb: color } };
+  }
+  await descargar(await wb.xlsx.writeBuffer(), nombreArchivo);
+}

@@ -7,11 +7,13 @@ import type {
   ColumnaControl,
   Componente,
   ControlFila,
+  CumplimientoPm,
   Equipo,
   LecturaCalc,
   Perfil,
   PlanMp,
   RegistroPm,
+  UtilizacionMes,
 } from "./types";
 
 async function todo<T>(tabla: string, orden?: string): Promise<T[]> {
@@ -56,6 +58,18 @@ export const useColumnas = () =>
   useQuery({
     queryKey: ["columnas_control"],
     queryFn: () => todo<ColumnaControl>("columnas_control", "orden"),
+  });
+
+export const useCumplimiento = () =>
+  useQuery({
+    queryKey: ["v_cumplimiento_pm"],
+    queryFn: () => todo<CumplimientoPm>("v_cumplimiento_pm", "fecha"),
+  });
+
+export const useUtilizacion = () =>
+  useQuery({
+    queryKey: ["v_utilizacion_mensual"],
+    queryFn: () => todo<UtilizacionMes>("v_utilizacion_mensual", "mes"),
   });
 
 export const usePerfiles = () =>

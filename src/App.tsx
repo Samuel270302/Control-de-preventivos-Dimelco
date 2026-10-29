@@ -12,6 +12,8 @@ import ControlPm from "./pages/ControlPm";
 import Control40 from "./pages/Control40";
 import FichaEquipo from "./pages/FichaEquipo";
 import Graficas from "./pages/Graficas";
+import Indicadores from "./pages/Indicadores";
+import Programa from "./pages/Programa";
 import Lecturas from "./pages/Lecturas";
 import RegistroPmPage from "./pages/RegistroPm";
 import Cambios from "./pages/Cambios";
@@ -55,6 +57,8 @@ function ConRealtime({ esAdmin, puedeCapturar }: { esAdmin: boolean; puedeCaptur
         <Route path="/rutina40" element={<Control40 />} />
         <Route path="/graficas" element={<Graficas />} />
         <Route path="/equipo/:id" element={<FichaEquipo />} />
+        <Route path="/programa" element={<Programa />} />
+        <Route path="/indicadores" element={<Indicadores />} />
         {puedeCapturar && <Route path="/lecturas" element={<Lecturas />} />}
         {puedeCapturar && <Route path="/registro-pm" element={<RegistroPmPage />} />}
         {puedeCapturar && <Route path="/cambios" element={<Cambios />} />}

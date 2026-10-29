@@ -24,6 +24,8 @@ CONSULTAS = {
     "parametros": "select * from parametros",
     "columnas_control": "select * from columnas_control order by orden",
     "v_registros_pm": "select * from v_registros_pm order by fecha",
+    "v_cumplimiento_pm": "select * from v_cumplimiento_pm order by fecha",
+    "v_utilizacion_mensual": "select * from v_utilizacion_mensual order by mes",
 }
 
 

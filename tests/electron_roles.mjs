@@ -1,7 +1,7 @@
 // Recorrido completo por rol dentro de Electron real, con Supabase simulado.
 // Uso: xvfb-run -a node tests/electron_roles.mjs <carpeta_salida>
 import { createRequire } from "node:module";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
@@ -14,15 +14,15 @@ const RAIZ = new URL("..", import.meta.url).pathname;
 const SALIDA = process.argv[2] ?? join(RAIZ, "capturas");
 const fixture = (n) => JSON.parse(readFileSync(join(RAIZ, "tests/fixtures", `${n}.json`), "utf8"));
 const TABLAS = ["v_control_pm", "v_control_40", "equipos", "componentes", "planes_mp", "cambios_horometro",
-  "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control", "v_registros_pm"];
+  "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control", "v_registros_pm", "v_cumplimiento_pm", "v_utilizacion_mensual"];
 
 const MENU_ESPERADO = {
-  admin: ["Control PM", "Rutina 40 h", "Gráficas", "Lecturas", "Registro PM", "Cambios horómetro", "Historial", "Equipos", "Plan MP", "Usuarios"],
-  capturador: ["Control PM", "Rutina 40 h", "Gráficas", "Lecturas", "Registro PM", "Cambios horómetro", "Historial"],
-  invitado: ["Control PM", "Rutina 40 h", "Gráficas", "Historial"],
+  admin: ["Control PM", "Rutina 40 h", "Gráficas", "Programa 4 semanas", "Indicadores", "Lecturas", "Registro PM", "Cambios horómetro", "Historial", "Equipos", "Plan MP", "Usuarios"],
+  capturador: ["Control PM", "Rutina 40 h", "Gráficas", "Programa 4 semanas", "Indicadores", "Lecturas", "Registro PM", "Cambios horómetro", "Historial"],
+  invitado: ["Control PM", "Rutina 40 h", "Gráficas", "Programa 4 semanas", "Indicadores", "Historial"],
 };
 const RUTAS = [
-  ["#/control", "Control y proyección"], ["#/rutina40", "Rutina de percusión"], ["#/graficas", "Evolución de horómetros"],
+  ["#/control", "Control y proyección"], ["#/rutina40", "Rutina de percusión"], ["#/graficas", "Evolución de horómetros"], ["#/programa", "Programa de mantenimiento"], ["#/indicadores", "Indicadores de gestión"],
   ["#/lecturas", "Captura de lecturas"], ["#/registro-pm", "Registro de mantenimientos"], ["#/cambios", "Cambios y reinicios"],
   ["#/historial", "Historial"], ["#/equipos", "Maestro de equipos"], ["#/plan", "Plan de mantenimiento"], ["#/usuarios", "Usuarios"],
 ];
@@ -42,6 +42,9 @@ async function probarRol(rol) {
     executablePath: join(RAIZ, "node_modules/electron/dist/electron"),
     args: [join(RAIZ, "dist-electron/main.js"), "--no-sandbox"], cwd: RAIZ,
   });
+  await app.evaluate(({ dialog }, carpeta) => {
+    dialog.showSaveDialog = async (...a) => ({ canceled: false, filePath: carpeta + "/" + a[a.length - 1].defaultPath.split("/").pop() });
+  }, SALIDA);
   const ctx = app.context();
   const escrituras = [];
   await ctx.route("**/rest/v1/**", async (route) => {
@@ -109,7 +112,7 @@ async function probarRol(rol) {
     const h1 = (await win.locator("h1").first().textContent()) ?? "";
     const permitida = MENU_ESPERADO[rol].some((m) => RUTAS.find(([x]) => x === hash) && h1.startsWith(titulo)) || h1.startsWith(titulo);
     const deberia = MENU_ESPERADO[rol].length && RUTAS.findIndex(([x]) => x === hash) < 100 &&
-      ({ "#/control": 1, "#/rutina40": 1, "#/graficas": 1, "#/historial": 1 }[hash] ||
+      ({ "#/control": 1, "#/rutina40": 1, "#/graficas": 1, "#/programa": 1, "#/indicadores": 1, "#/historial": 1 }[hash] ||
        (["#/lecturas", "#/registro-pm", "#/cambios"].includes(hash) && rol !== "invitado") ||
        (["#/equipos", "#/plan", "#/usuarios"].includes(hash) && rol === "admin"));
     if (deberia) r(`abre ${hash}`, h1.startsWith(titulo), h1);
@@ -127,6 +130,28 @@ async function probarRol(rol) {
   await win.locator(".chip.vencido").click(); await win.waitForTimeout(300);
   const estados = await win.locator("tbody .estado").allTextContents();
   r("Control PM: filtro Vencidos deja solo vencidos", estados.length > 0 && estados.every((e) => e === "Vencido"), `${estados.length} filas`);
+  // F1: programa de 4 semanas
+  await ir("#/programa");
+  const grupos = await win.locator(".grupo-programa .titulo-tabla").allTextContents();
+  r("Programa: vencidos arriba y 4 semanas", grupos.length === 5 && grupos[0].startsWith("Vencidos") && grupos[4].startsWith("Semana 4"), grupos.map((g) => g.split(" · ")[0]).join(", "));
+  const fechas = (await win.locator(".grupo-programa").nth(1).locator("tbody tr td:first-child").allTextContents()).map((t) => t.split("/").reverse().join(""));
+  r("Programa: semana ordenada por fecha estimada", fechas.every((f, i) => i === 0 || fechas[i - 1] <= f), `${fechas.length} PM en semana 1`);
+  if (rol === "admin") await win.screenshot({ path: join(SALIDA, "f1_lista.png"), fullPage: true });
+  await win.getByRole("button", { name: "Calendario" }).click(); await win.waitForTimeout(300);
+  r("Programa: calendario de 28 días con hoy marcado", (await win.locator(".cal-celda").count()) === 28 && (await win.locator(".cal-celda.hoy").count()) === 1);
+  if (rol === "admin") await win.screenshot({ path: join(SALIDA, "f1_calendario.png"), fullPage: true });
+  await win.getByRole("button", { name: "Exportar a Excel" }).click(); await win.waitForTimeout(1500);
+  r("Programa: exporta a Excel", existsSync(join(SALIDA, `Programa 4 semanas ${new Date().toISOString().slice(0, 10)}.xlsx`)));
+  // F4: indicadores
+  await ir("#/indicadores");
+  const tiles = await win.locator(".chip.indicador .n").allTextContents();
+  r("Indicadores: 4 indicadores con valor", tiles.length === 4 && tiles.every((t) => t.trim() !== ""), tiles.join(" | "));
+  r("Indicadores: gráfica de 12 meses", (await win.locator(".grafica-cumplimiento .grafica-eje").count()) >= 12 + 3);
+  await win.locator(".grafica-cumplimiento svg g").nth(10).hover(); await win.waitForTimeout(200);
+  r("Indicadores: tooltip al pasar el mouse", (await win.locator(".grafica-cumplimiento .grafica-tooltip").count()) === 1);
+  r("Indicadores: tabla de utilización con filas", (await win.locator(".titulo-tabla:has-text('Utilización') + .tabla-marco tbody tr").count()) > 0);
+  if (rol === "admin") await win.screenshot({ path: join(SALIDA, "f4_indicadores.png"), fullPage: true });
+
   // F5: ficha por equipo desde el Control PM
   await ir("#/control");
   const enlace = win.locator("tbody a.enlace-equipo").first();

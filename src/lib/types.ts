@@ -139,3 +139,35 @@ export interface Perfil {
   rol: "admin" | "capturador" | "invitado";
   activo: boolean;
 }
+
+export interface CumplimientoPm {
+  componente_id: string;
+  equipo_id: string;
+  cod_interno: string;
+  nombre: string;
+  tipo_horometro: TipoHorometro;
+  sistema: string;
+  seccion: number;
+  fecha: string;
+  mes: string;
+  gama: number | null;
+  lectura_acum: number | null;
+  fecha_anterior: string | null;
+  meta_acum: number | null;
+  horas_atraso: number | null;
+  a_tiempo: boolean | null;
+}
+
+export interface UtilizacionMes {
+  componente_id: string;
+  equipo_id: string;
+  cod_interno: string;
+  nombre: string;
+  tipo_horometro: TipoHorometro;
+  seccion: number;
+  mes: string;
+  horas: number;
+  dias: number;
+  h_dia: number | null;
+  lecturas: number;
+}

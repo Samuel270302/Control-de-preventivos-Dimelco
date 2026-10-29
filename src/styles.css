@@ -472,3 +472,42 @@ dialog.dialogo-ancho { width: min(1100px, 94vw); }
 .tabla-edicion input:not([type="checkbox"]), .tabla-edicion select { padding: 5px 6px; font-size: 13px; }
 .tabla-edicion .centro { text-align: center; }
 .tabla-edicion input[type="checkbox"] { width: auto; }
+
+/* F1 · programa de 4 semanas */
+.grupo-programa { margin-bottom: 16px; }
+.titulo-vencidos { color: #ffb4ac; }
+.grupo-vacio { background: var(--panel); border: 1px solid var(--borde); border-top: 0; margin: 0; padding: 10px 14px; border-radius: 0 0 8px 8px; }
+.calendario { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.cal-dia-nombre { font-size: 12px; font-weight: 700; color: var(--texto-suave); padding: 0 4px; }
+.cal-celda { background: var(--panel); border: 1px solid var(--borde); border-radius: 8px; min-height: 104px; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+.cal-celda.pasado { background: var(--panel-2); }
+.cal-celda.hoy { outline: 2px solid var(--ambar); outline-offset: -1px; }
+.cal-fecha { font-size: 11px; color: var(--texto-suave); font-variant-numeric: tabular-nums; }
+.cal-pm { display: flex; justify-content: space-between; gap: 4px; font-size: 12px; padding: 3px 6px; border-radius: 5px; border: 1px solid transparent; white-space: nowrap; overflow: hidden; }
+.cal-pm .enlace-equipo { overflow: hidden; text-overflow: ellipsis; border-bottom: 0; }
+.cal-pm.r40 { border-style: dashed; border-color: currentColor; }
+.cal-pm.vencido { background: var(--rojo-fondo); color: var(--rojo-letra); }
+.cal-pm.programar { background: #fde9b0; color: #6b4e00; }
+.cal-pm.repuestos { background: var(--amarillo-fondo); color: var(--amarillo-letra); }
+.cal-pm.normal { background: var(--verde-fondo); color: var(--verde-letra); }
+.cal-gama { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cal-vencidos { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: var(--panel); border: 1px solid var(--borde); border-left: 4px solid var(--rojo-letra); border-radius: 8px; padding: 8px 10px; margin-bottom: 12px; }
+.cal-vencidos-titulo { font-weight: 700; color: var(--rojo-letra); margin-right: 6px; font-size: 13px; }
+.cal-vencidos .cal-pm { min-width: 130px; }
+
+/* F4 · indicadores de gestión */
+.resumen-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.chip.indicador { cursor: default; border-top-color: var(--ambar); }
+.chip.indicador:hover { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+.chip.indicador.alerta { border-top-color: var(--rojo-letra); }
+.chip.indicador.alerta .n { color: var(--rojo-letra); }
+.chip.indicador .t { display: block; font-weight: 600; color: var(--texto); }
+.chip.indicador .d { display: block; font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
+.panel-indicador { background: var(--panel); border: 1px solid var(--borde); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+.titulo-seccion { font-weight: 700; font-size: 14px; color: var(--oscuro-2); }
+.grafica-cumplimiento { max-width: 900px; }
+.barra-cumplimiento { fill: #b07800; }
+.grafica-valor { fill: var(--texto); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.fila-tablas-ficha > div { min-width: 0; }
+.fila-tablas-ficha .tabla-marco { overflow-x: auto; }
+.pila-tablas > div { margin-bottom: 16px; }

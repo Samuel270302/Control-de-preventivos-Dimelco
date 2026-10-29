@@ -11,7 +11,7 @@ const SALIDA = process.argv[2] ?? join(RAIZ, "capturas");
 const fixture = (n) => JSON.parse(readFileSync(join(RAIZ, "tests/fixtures", `${n}.json`), "utf8"));
 const datos = Object.fromEntries(
   ["v_control_pm", "v_control_40", "equipos", "componentes", "planes_mp", "cambios_horometro",
-   "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control", "v_registros_pm"].map((n) => [n, fixture(n)])
+   "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control", "v_registros_pm", "v_cumplimiento_pm", "v_utilizacion_mensual"].map((n) => [n, fixture(n)])
 );
 const resultados = [];
 const ok = (nombre, cond, detalle = "") => resultados.push(`${cond ? "OK   " : "FALLA"} ${nombre}${detalle ? " · " + detalle : ""}`);
