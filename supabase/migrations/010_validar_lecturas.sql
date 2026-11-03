@@ -167,3 +167,7 @@ select x.id, x.componente_id, x.fecha, x.turno, x.lectura, x.origen, x.creado_po
          else 'OK'
        end as control
 from horas x;
+
+-- create or replace view reinicia las opciones de la vista: sin esto v_lecturas
+-- deja de aplicar las políticas de lecturas (quedó así en producción hasta el 03/11/2026).
+alter view v_lecturas set (security_invoker = true);
