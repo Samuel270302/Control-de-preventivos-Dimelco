@@ -42,7 +42,7 @@ function tabla(filas: ControlFila[]) {
     <tbody>${filasHtml}</tbody></table>`;
 }
 
-export async function reporteSemanal(pm: ControlFila[], r40: ControlFila[]): Promise<string | null> {
+export async function reporteSemanal(pm: ControlFila[], r40: ControlFila[], unidad: string | null): Promise<string | null> {
   const resumen = (filas: ControlFila[]) =>
     ORDEN_ESTADOS.map((e) => `<span class="chip">${e}: <b>${cuenta(filas, e)}</b></span>`).join(" ");
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -61,7 +61,7 @@ export async function reporteSemanal(pm: ControlFila[], r40: ControlFila[]): Pro
     @media print { @page { size: A4 landscape; margin: 12mm; } }
   </style></head><body>
   <h1>Reporte semanal de mantenimiento preventivo</h1>
-  <p class="sub">Flota HEMCO · generado el ${fFecha(hoyISO())}</p>
+  <p class="sub">${unidad ? `Unidad ${unidad}` : "Todas las unidades"} · generado el ${fFecha(hoyISO())}</p>
   <h2>PM mayor (diésel · compresor · perforadoras y empernadoras)</h2>
   <p>${resumen(pm)}</p>
   ${tabla(pm)}
@@ -69,7 +69,7 @@ export async function reporteSemanal(pm: ControlFila[], r40: ControlFila[]): Pro
   <p>${resumen(r40)}</p>
   ${tabla(r40)}
   </body></html>`;
-  const nombre = `Reporte semanal preventivos ${hoyISO()}.pdf`;
+  const nombre = `Reporte semanal preventivos ${unidad ?? "todas las unidades"} ${hoyISO()}.pdf`;
   const escritorio = (window as unknown as { appInfo?: AppInfo }).appInfo;
   if (escritorio?.guardarPdf) {
     // App de escritorio: Electron genera el PDF y pregunta dónde guardarlo.

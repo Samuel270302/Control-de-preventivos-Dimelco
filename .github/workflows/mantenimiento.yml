@@ -2,7 +2,7 @@ name: Mantenimiento de la base
 
 # Todos los días: una consulta real a la base para que Supabase (plan Free)
 # no pause el proyecto por inactividad.
-# Domingos: respaldo completo, cifrado con gpg (AES-256) usando como frase el mismo
+# Respaldo completo diario, cifrado con gpg (AES-256) usando como frase el mismo
 # secreto SUPABASE_DB_URL, y guardado en la rama "respaldos" del repositorio.
 # El repositorio es público: nunca se sube un respaldo sin cifrar.
 # Requiere el secreto SUPABASE_DB_URL (cadena de conexión del pooler en modo sesión, puerto 5432).
@@ -49,11 +49,8 @@ jobs:
       - name: Decidir si hoy toca respaldo
         id: dia
         run: |
-          if [ "$(date -u +%u)" = "7" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "respaldar=si" >> "$GITHUB_OUTPUT"
-          else
-            echo "respaldar=no" >> "$GITHUB_OUTPUT"
-          fi
+          # Desde la 0.5.0 (4 unidades) el respaldo es diario.
+          echo "respaldar=si" >> "$GITHUB_OUTPUT"
 
       - name: Respaldo completo
         if: steps.dia.outputs.respaldar == 'si'
@@ -101,7 +98,7 @@ jobs:
             cat > README.md <<'EOF'
           # Respaldos de la base de datos (cifrados)
 
-          Generados cada domingo por el flujo "Mantenimiento de la base".
+          Generados cada día por el flujo "Mantenimiento de la base".
           Cada carpeta tiene dos archivos cifrados con gpg (AES-256):
           - AAAA-MM-DD_public.sql.gz.gpg: tablas de la app con estructura y datos.
           - AAAA-MM-DD_usuarios.sql.gz.gpg: usuarios de inicio de sesión (auth.users y auth.identities).

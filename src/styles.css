@@ -517,3 +517,9 @@ dialog.dialogo-ancho { width: min(1100px, 94vw); }
 /* F9 · aviso de actualización descargada */
 .aviso-actualizacion { display: flex; align-items: center; gap: 14px; background: var(--ambar-suave); border: 1px solid #e6c65c; border-left: 4px solid var(--ambar); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 13px; }
 .aviso-actualizacion span { flex: 1; }
+
+/* 0.5.0 · unidad en el menú */
+.selector-unidad { display: block; padding: 12px 16px; border-bottom: 1px solid #3a3a3a; }
+.selector-unidad span { display: block; font-size: 11px; color: #9f9f9f; margin-bottom: 4px; letter-spacing: 0.03em; }
+.selector-unidad select { width: 100%; background: #2f2f2f; color: #f2f2f2; border: 1px solid #4a4a4a; border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+.unidad-fija { padding: 12px 16px; border-bottom: 1px solid #3a3a3a; color: var(--ambar); font-weight: 600; font-size: 13px; }

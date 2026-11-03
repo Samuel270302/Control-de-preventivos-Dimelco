@@ -7,8 +7,16 @@ export type TipoHorometro =
 
 export type Turno = "Dia" | "Noche";
 
+export interface Unidad {
+  id: string;
+  nombre: string;
+  activo: boolean;
+  orden: number;
+}
+
 export interface Equipo {
   id: string;
+  unidad_id: string;
   cod_interno: string;
   cod_sap: string | null;
   modelo: string;
@@ -123,6 +131,17 @@ export interface ControlFila {
   fecha_estimada: string | null;
   estado: string;
   observacion: string;
+  unidad_id?: string | null;
+  unidad?: string | null;
+}
+
+export interface UltimaLectura {
+  componente_id: string;
+  fecha: string;
+  turno: Turno;
+  lectura: number;
+  lectura_acum: number;
+  num_turno: number;
 }
 
 export interface ColumnaControl {
@@ -138,6 +157,7 @@ export interface Perfil {
   correo: string | null;
   rol: "admin" | "capturador" | "invitado";
   activo: boolean;
+  unidad_id: string | null;
 }
 
 export interface CumplimientoPm {
@@ -156,6 +176,8 @@ export interface CumplimientoPm {
   meta_acum: number | null;
   horas_atraso: number | null;
   a_tiempo: boolean | null;
+  unidad_id?: string | null;
+  unidad?: string | null;
 }
 
 export interface UtilizacionMes {
@@ -170,4 +192,6 @@ export interface UtilizacionMes {
   dias: number;
   h_dia: number | null;
   lecturas: number;
+  unidad_id?: string | null;
+  unidad?: string | null;
 }

@@ -5,7 +5,7 @@ import { useAuth } from "../auth";
 import {
   useComponentes,
   useEquipos,
-  useLecturasRecientes,
+  useUltimasLecturas,
   usePlanes,
   useRegistrosPm,
 } from "../lib/queries";
@@ -36,7 +36,7 @@ export default function RegistroPmPage() {
   // se registra en renglones separados, cada uno con su lectura.
   const [renglones, setRenglones] = useState<Renglon[]>([{ ...RENGLON_VACIO }]);
   const { avisar } = useAvisos();
-  const { data: lecturasRecientes } = useLecturasRecientes(1500);
+  const { data: ultimas } = useUltimasLecturas();
   // Resultado del control de la base por renglón: null = OK, texto = motivo del rechazo.
   const [validaciones, setValidaciones] = useState<Record<number, string | null>>({});
 
@@ -67,7 +67,7 @@ export default function RegistroPmPage() {
   const hayRechazos = Object.values(validaciones).some((v) => v);
 
   function ultimaLectura(componenteId: string) {
-    return (lecturasRecientes ?? []).find((l) => l.componente_id === componenteId);
+    return (ultimas ?? []).find((l) => l.componente_id === componenteId);
   }
 
   const compDelEquipo = useMemo(

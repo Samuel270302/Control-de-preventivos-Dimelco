@@ -7,6 +7,7 @@ import { fFecha } from "../lib/fmt";
 import type { TipoHorometro } from "../lib/types";
 import { useAvisos } from "../components/Avisos";
 import EditorEquipo from "../components/EditorEquipo";
+import { useUnidad, useUnidades } from "../lib/unidad";
 import type { Equipo } from "../lib/types";
 
 const TIPOS: TipoHorometro[] = [
@@ -24,6 +25,11 @@ export default function Equipos() {
   const { data: planes } = usePlanes();
   const { avisar } = useAvisos();
   const [editando, setEditando] = useState<Equipo | null>(null);
+  const { unidadId } = useUnidad();
+  const { data: unidades } = useUnidades();
+  const nombreUnidad = new Map((unidades ?? []).map((u) => [u.id, u.nombre]));
+  const [unidadNueva, setUnidadNueva] = useState("");
+  const unidadEquipo = unidadId ?? unidadNueva;
 
   const [nuevoEq, setNuevoEq] = useState({ cod: "", sap: "", modelo: "", fecha: "" });
   const [nuevoComp, setNuevoComp] = useState({
@@ -50,7 +56,9 @@ export default function Equipos() {
     mutationFn: async () => {
       if (!nuevoEq.cod.trim() || !nuevoEq.modelo.trim())
         throw new Error("Código interno y modelo son obligatorios");
+      if (!unidadEquipo) throw new Error("Elija la unidad del equipo");
       const { error } = await supabase().from("equipos").insert({
+        unidad_id: unidadEquipo,
         cod_interno: nuevoEq.cod.trim(),
         cod_sap: nuevoEq.sap.trim() || null,
         modelo: nuevoEq.modelo.trim(),
@@ -123,6 +131,17 @@ export default function Equipos() {
 
       <div className="panel-formulario">
         <div className="fila-campos">
+          {!unidadId && (
+            <label className="campo" style={{ maxWidth: 190 }}>
+              <span>Unidad</span>
+              <select value={unidadNueva} onChange={(e) => setUnidadNueva(e.target.value)}>
+                <option value="">Seleccione</option>
+                {(unidades ?? []).map((u) => (
+                  <option key={u.id} value={u.id}>{u.nombre}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="campo" style={{ maxWidth: 220 }}>
             <span>Nuevo equipo: código interno</span>
             <input value={nuevoEq.cod} onChange={(e) => setNuevoEq({ ...nuevoEq, cod: e.target.value })} placeholder="Scooptram #7" />
@@ -218,6 +237,7 @@ export default function Equipos() {
         <table>
           <thead>
             <tr>
+              {!unidadId && <th>Unidad</th>}
               <th>Equipo</th>
               <th>SAP</th>
               <th>Modelo</th>
@@ -230,6 +250,7 @@ export default function Equipos() {
           <tbody>
             {(equipos ?? []).map((e) => (
               <tr key={e.id}>
+                {!unidadId && <td>{nombreUnidad.get(e.unidad_id)}</td>}
                 <td>
                   <Link to={`/equipo/${e.id}`} className="enlace-equipo">{e.cod_interno}</Link>
                 </td>

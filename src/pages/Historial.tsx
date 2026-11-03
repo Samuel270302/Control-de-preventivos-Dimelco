@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../auth";
-import { useComponentes, useEquipos, usePerfiles } from "../lib/queries";
+import { useComponentes, useComponentesUnidad, useEquipos, usePerfiles } from "../lib/queries";
+import { useUnidad } from "../lib/unidad";
 import { exportarLecturas, exportarRegistrosPm } from "../lib/exportar";
 import { fFecha, fFechaHora, fNum, hoyISO } from "../lib/fmt";
 import type { Anulacion, LecturaCalc, RegistroPm } from "../lib/types";
@@ -41,16 +42,20 @@ export default function Historial() {
   // Lo importado del Excel no tiene usuario; un usuario borrado deja el id sin perfil.
   const quien = (id: string | null | undefined, importado = false) =>
     importado ? "Importado del Excel" : !id ? "Sin dato" : (nombreUsuario.get(id) ?? "Usuario dado de baja");
+  const compsUnidad = useComponentesUnidad();
+  const { unidadId } = useUnidad();
   const compsEquipo = useMemo(
     () =>
       equipoId
         ? (componentes ?? []).filter((c) => c.equipo_id === equipoId).map((c) => c.id)
-        : null,
-    [componentes, equipoId]
+        : compsUnidad
+          ? [...compsUnidad]
+          : null,
+    [componentes, equipoId, compsUnidad]
   );
 
   const lecturas = useQuery({
-    queryKey: ["hist-lecturas", equipoId, desde, hasta, verAnulados],
+    queryKey: ["hist-lecturas", unidadId, equipoId, desde, hasta, verAnulados],
     queryFn: async () => {
       // Las anuladas no están en v_lecturas: se leen de la tabla, sin horas calculadas.
       let q = verAnulados
@@ -78,7 +83,7 @@ export default function Historial() {
   });
 
   const registros = useQuery({
-    queryKey: ["hist-pm", equipoId, desde, hasta, verAnulados],
+    queryKey: ["hist-pm", unidadId, equipoId, desde, hasta, verAnulados],
     queryFn: async () => {
       let q = supabase()
         .from("registros_pm")

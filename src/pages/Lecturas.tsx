@@ -5,10 +5,10 @@ import { useAuth } from "../auth";
 import {
   useComponentes,
   useEquipos,
-  useLecturasRecientes,
+  useUltimasLecturas,
 } from "../lib/queries";
 import { fFecha, fNum, hoyISO } from "../lib/fmt";
-import type { Componente, LecturaCalc, Turno } from "../lib/types";
+import type { Componente, Turno, UltimaLectura } from "../lib/types";
 import { useAvisos } from "../components/Avisos";
 import { marcarPendientes } from "../lib/pendientes";
 
@@ -23,7 +23,7 @@ export default function Lecturas() {
   const qc = useQueryClient();
   const { data: equipos } = useEquipos();
   const { data: componentes } = useComponentes();
-  const { data: recientes } = useLecturasRecientes(1500);
+  const { data: ultimas } = useUltimasLecturas();
 
   const [fecha, setFecha] = useState(hoyISO());
   const [turno, setTurno] = useState<Turno>("Dia");
@@ -100,14 +100,10 @@ export default function Lecturas() {
     return v && v.clave === claveDe(id, texto) ? v : "validando";
   }
 
-  const porComponente = useMemo(() => {
-    const m = new Map<string, LecturaCalc[]>();
-    for (const l of recientes ?? []) {
-      if (!m.has(l.componente_id)) m.set(l.componente_id, []);
-      m.get(l.componente_id)!.push(l);
-    }
-    return m;
-  }, [recientes]);
+  const porComponente = useMemo(
+    () => new Map((ultimas ?? []).map((l) => [l.componente_id, l])),
+    [ultimas]
+  );
 
   const filas = useMemo(() => {
     if (!equipos || !componentes) return [];
@@ -122,8 +118,8 @@ export default function Lecturas() {
       );
   }, [equipos, componentes]);
 
-  function ultima(c: Componente): LecturaCalc | undefined {
-    return porComponente.get(c.id)?.[0];
+  function ultima(c: Componente): UltimaLectura | undefined {
+    return porComponente.get(c.id);
   }
 
   const grabar = useMutation({

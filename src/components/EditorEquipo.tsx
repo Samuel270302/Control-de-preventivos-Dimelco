@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
 import type { Componente, Equipo, PlanMp } from "../lib/types";
 import { useAvisos } from "./Avisos";
+import { useUnidades } from "../lib/unidad";
 
 export const SISTEMAS_COMPONENTE = ["Motor Diésel", "Compresor", "Perforadora", "Empernadora"];
 export const SECCIONES = [
@@ -27,6 +28,7 @@ export default function EditorEquipo({
   const qc = useQueryClient();
   const { avisar } = useAvisos();
   const [eq, setEq] = useState(equipo);
+  const { data: unidades } = useUnidades();
   const [comps, setComps] = useState(componentes);
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -50,6 +52,7 @@ export default function EditorEquipo({
           cod_sap: eq.cod_sap?.trim() || null,
           modelo: eq.modelo.trim(),
           fecha_inicio_operacion: eq.fecha_inicio_operacion || null,
+          unidad_id: eq.unidad_id,
         })
         .eq("id", eq.id);
       if (error) throw error;
@@ -91,6 +94,14 @@ export default function EditorEquipo({
     >
       <h1 style={{ fontSize: 16 }}>Editar {equipo.cod_interno}</h1>
       <div className="fila-campos">
+        <label className="campo">
+          <span>Unidad</span>
+          <select value={eq.unidad_id} onChange={(e) => setEq({ ...eq, unidad_id: e.target.value })}>
+            {(unidades ?? []).map((u) => (
+              <option key={u.id} value={u.id}>{u.nombre}</option>
+            ))}
+          </select>
+        </label>
         <label className="campo">
           <span>Código interno</span>
           <input value={eq.cod_interno} onChange={(e) => setEq({ ...eq, cod_interno: e.target.value })} />

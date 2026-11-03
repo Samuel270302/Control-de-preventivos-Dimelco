@@ -7,6 +7,7 @@ import { lecturasPendientes, marcarPendientes } from "../lib/pendientes";
 import DialogoConfirmar from "./DialogoConfirmar";
 import DialogoContrasena from "./DialogoContrasena";
 import AvisoActualizacion from "./AvisoActualizacion";
+import { SelectorUnidad } from "../lib/unidad";
 import { useAvisos } from "./Avisos";
 import {
   IconoCalendario,
@@ -96,6 +97,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <span className="logo-sub">HEMCO · mantenimiento</span>
           </div>
         </div>
+        <SelectorUnidad />
         <nav>
           {enlaces.filter((e) => puedeCapturar || !e.captura).map((e) => (
             <NavLink key={e.a} to={e.a} onClick={(ev) => alNavegar(ev, e.a)} className={({ isActive }) => (isActive ? "activo" : "")}>

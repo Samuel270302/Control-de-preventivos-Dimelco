@@ -6,6 +6,7 @@ import { SISTEMAS } from "../lib/sistemas";
 import EstadoBadge from "../components/EstadoBadge";
 import EnlaceEquipo from "../components/EnlaceEquipo";
 import { EsqueletoTabla } from "../components/Esqueleto";
+import { useNombreUnidad } from "../lib/unidad";
 import type { ControlFila } from "../lib/types";
 
 const SEMANAS = 4;
@@ -29,6 +30,7 @@ const porFecha = (a: Item, b: Item) =>
 
 export default function Programa() {
   const hoy = hoyISO();
+  const unidad = useNombreUnidad();
   const inicio = lunesDe(hoy);
   const fin = sumarDiasISO(inicio, SEMANAS * 7 - 1);
   const { data: control, isLoading: c1 } = useControlPm();
@@ -78,7 +80,7 @@ export default function Programa() {
         ...vencidos.map((i) => fila("Vencidos", i)),
         ...semanas.flatMap((w) => w.items.map((i) => fila(`Semana ${w.n} (${fFecha(w.desde)} al ${fFecha(w.hasta)})`, i))),
       ],
-      `Programa 4 semanas ${hoy}.xlsx`
+      `Programa 4 semanas ${unidad ? unidad + " " : ""}${hoy}.xlsx`
     );
   }
 
@@ -88,7 +90,7 @@ export default function Programa() {
     <>
       <h1>Programa de mantenimiento · 4 semanas</h1>
       <p className="subtitulo">
-        Del {fFecha(inicio)} al {fFecha(fin)} según la fecha estimada del Control PM y la rutina de 40 h ·{" "}
+        {unidad ?? "Todas las unidades"} · del {fFecha(inicio)} al {fFecha(fin)} según la fecha estimada del Control PM y la rutina de 40 h ·{" "}
         {vencidos.length} vencido(s) y {total} programado(s)
       </p>
       <div className="barra-acciones">

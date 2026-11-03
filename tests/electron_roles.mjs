@@ -14,7 +14,7 @@ const RAIZ = new URL("..", import.meta.url).pathname;
 const SALIDA = process.argv[2] ?? join(RAIZ, "capturas");
 const fixture = (n) => JSON.parse(readFileSync(join(RAIZ, "tests/fixtures", `${n}.json`), "utf8"));
 const TABLAS = ["v_control_pm", "v_control_40", "equipos", "componentes", "planes_mp", "cambios_horometro",
-  "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control", "v_registros_pm", "v_cumplimiento_pm", "v_utilizacion_mensual"];
+  "v_lecturas", "registros_pm", "parametros", "perfiles", "columnas_control", "v_registros_pm", "v_cumplimiento_pm", "v_utilizacion_mensual", "unidades", "v_ultima_lectura"];
 
 const MENU_ESPERADO = {
   admin: ["Control PM", "Rutina 40 h", "Gráficas", "Programa 4 semanas", "Indicadores", "Lecturas", "Registro PM", "Cambios horómetro", "Historial", "Equipos", "Plan MP", "Usuarios"],
@@ -28,17 +28,35 @@ const RUTAS = [
 ];
 
 const resultados = [];
+
+function filtrarUnidad(datos, unidad) {
+  datos.equipos = datos.equipos.filter((e) => e.unidad_id === unidad);
+  const eqs = new Set(datos.equipos.map((e) => e.id));
+  datos.componentes = datos.componentes.filter((c) => eqs.has(c.equipo_id));
+  const comps = new Set(datos.componentes.map((c) => c.id));
+  for (const t of ["v_control_pm", "v_control_40", "v_cumplimiento_pm", "v_utilizacion_mensual"])
+    datos[t] = datos[t].filter((f) => f.unidad_id === unidad);
+  for (const t of ["v_lecturas", "registros_pm", "v_registros_pm", "cambios_horometro", "v_ultima_lectura", "lecturas"])
+    if (datos[t]) datos[t] = datos[t].filter((f) => comps.has(f.componente_id));
+}
 async function probarRol(rol) {
   const datos = Object.fromEntries(TABLAS.map((n) => [n, fixture(n)]));
   datos.perfiles = [...datos.perfiles, { user_id: "00000000-0000-0000-0000-000000000002", nombre: "Planeador Martha 850",
     correo: "planeador.martha@hemco.local", rol: "capturador", activo: true }];
   // Una lectura anulada por el admin para ver la auditoría en el Historial.
-  const base = datos.v_lecturas.find((l) => l.fecha >= "2026-10-01");
+  const unidadHemco = datos.unidades.find((u) => u.nombre === "HEMCO").id;
+  const eqHemco = new Set(datos.equipos.filter((e) => e.unidad_id === unidadHemco).map((e) => e.id));
+  const compHemco = new Set(datos.componentes.filter((c) => eqHemco.has(c.equipo_id)).map((c) => c.id));
+  const base = datos.v_lecturas.find((l) => l.fecha >= "2026-10-01" && compHemco.has(l.componente_id));
   datos.lecturas = [{ ...base, id: "anulada-1", anulada: true, creado_por: null, origen: "app",
     motivo_anulacion: "Lectura duplicada por error de digitación", anulado_por: "00000000-0000-0000-0000-000000000001",
     anulado_en: "2026-10-20T15:30:00Z" }];
+  const HEMCO = datos.unidades.find((u) => u.nombre === "HEMCO").id;
   datos.perfiles = datos.perfiles.map((p) =>
-    rol === "inactivo" ? { ...p, rol: "invitado", activo: false } : { ...p, rol, activo: true });
+    rol === "inactivo" ? { ...p, rol: "invitado", activo: false, unidad_id: null }
+      : { ...p, rol, activo: true, unidad_id: rol === "admin" ? null : HEMCO });
+  // Seguridad por unidad simulada: capturador e invitado de HEMCO reciben solo HEMCO.
+  if (rol === "capturador" || rol === "invitado") filtrarUnidad(datos, HEMCO);
   const r = (nombre, cond, detalle = "") => resultados.push({ rol, nombre, ok: !!cond, detalle });
   const app = await _electron.launch({
     executablePath: join(RAIZ, "node_modules/electron/dist/electron"),
@@ -227,13 +245,13 @@ async function probarRol(rol) {
     await win.getByRole("button", { name: "Grabar lecturas" }).click(); await win.waitForTimeout(500);
     r("Lecturas: con error no se graba", !escrituras.includes("POST lecturas") &&
       (await win.locator(".aviso-texto").allTextContents()).join(" ").includes("menor que la anterior"));
-    await win.locator('input[type="date"]').fill("2026-10-12"); await win.locator("select").first().selectOption("Noche");
+    await win.locator('input[type="date"]').fill("2026-10-12"); await win.locator(".contenido select").first().selectOption("Noche");
     r("Lecturas: turno ya registrado = duplicado", (await probar(ultima + 1)).startsWith("Duplicado"));
-    await win.locator("select").first().selectOption("Dia");
+    await win.locator(".contenido select").first().selectOption("Dia");
     await caja.fill("");
     // Cambios de horómetro: offset propuesto
     await ir("#/cambios");
-    await win.locator("select").first().selectOption({ index: 3 });
+    await win.locator(".contenido select").first().selectOption({ index: 3 });
     await win.locator('label:has-text("Última lectura contador viejo") input').fill("1350");
     await win.locator('label:has-text("Lectura inicial contador nuevo") input').fill("0");
     await win.waitForTimeout(300);
@@ -254,13 +272,15 @@ async function probarRol(rol) {
     await ir("#/usuarios");
     await win.locator('label:has-text("Nuevo usuario: nombre") input').fill("Planeador turno B");
     await win.locator('label:has-text("Correo") input').fill("planeador.b@hemco.local");
+    r("0.5.0: alta bloqueada sin unidad", await win.getByRole("button", { name: "Crear usuario" }).isDisabled());
+    await win.locator('.panel-formulario label:has-text("Unidad") select').selectOption({ label: "HEMCO" });
     await win.locator('label:has-text("Contraseña inicial") input').fill("Clave1234");
     await win.screenshot({ path: join(SALIDA, "f7_usuarios.png") });
     await win.getByRole("button", { name: "Crear usuario" }).click(); await win.waitForTimeout(800);
     const alta = escrituras.find((e) => e.startsWith("FUNC") && e.includes('"crear"')) ?? "";
-    r("F7: alta de usuario llama a la función con los datos", alta.includes("planeador.b@hemco.local") && alta.includes('"rol":"capturador"'), alta.slice(0, 120));
+    r("F7: alta de usuario llama a la función con los datos", alta.includes("planeador.b@hemco.local") && alta.includes('"rol":"capturador"') && alta.includes(`"unidad_id":"${HEMCO}"`), alta.slice(0, 120));
     r("F7: el formulario se limpia tras crear", (await win.locator('label:has-text("Correo") input').inputValue()) === "");
-    r("Usuarios: el rol propio no se puede cambiar", await win.locator("tbody tr", { hasText: "demo@hemco.local" }).locator("select").isDisabled());
+    r("Usuarios: el rol propio no se puede cambiar", await win.locator("tbody tr", { hasText: "demo@hemco.local" }).locator("select").first().isDisabled());
     const filaMartha = win.locator("tbody tr", { hasText: "planeador.martha@hemco.local" });
     await filaMartha.getByRole("button", { name: "Restablecer contraseña" }).click(); await win.waitForTimeout(300);
     const dlgR = win.locator("dialog[open]");

@@ -4,6 +4,7 @@ import { fFecha, fNum, gamaTexto, hoyISO } from "../lib/fmt";
 import { SISTEMAS } from "../lib/sistemas";
 import EnlaceEquipo from "../components/EnlaceEquipo";
 import { EsqueletoTabla } from "../components/Esqueleto";
+import { useNombreUnidad } from "../lib/unidad";
 import type { CumplimientoPm } from "../lib/types";
 
 const MESES_GRAFICA = 12;
@@ -41,6 +42,7 @@ const pct = (r: { aTiempo: number; conMeta: number }) => (r.conMeta ? (100 * r.a
 
 export default function Indicadores() {
   const hoy = hoyISO();
+  const unidad = useNombreUnidad();
   const { data: cumplimiento, isLoading: c1 } = useCumplimiento();
   const { data: utilizacion, isLoading: c2 } = useUtilizacion();
   const { data: control, isLoading: c3 } = useControlPm();
@@ -80,7 +82,7 @@ export default function Indicadores() {
     <>
       <h1>Indicadores de gestión</h1>
       <p className="subtitulo">
-        PM mayor contra la meta de horas del plan · utilización a partir de las lecturas · al {fFecha(hoy)}
+        {unidad ?? "Todas las unidades"} · PM mayor contra la meta de horas del plan · utilización a partir de las lecturas · al {fFecha(hoy)}
       </p>
 
       <div className="resumen resumen-4">

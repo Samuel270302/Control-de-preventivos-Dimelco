@@ -7,14 +7,16 @@ import { useAvisos } from "../components/Avisos";
 import { gestionarUsuario } from "../lib/usuarios";
 import DialogoContrasena, { MIN_CONTRASENA } from "../components/DialogoContrasena";
 import type { Perfil } from "../lib/types";
+import { useUnidades } from "../lib/unidad";
 
-const NUEVO = { nombre: "", correo: "", rol: "capturador", contrasena: "" };
+const NUEVO = { nombre: "", correo: "", rol: "capturador", unidad_id: "", contrasena: "" };
 
 export default function Usuarios() {
   const qc = useQueryClient();
   const { data: perfiles } = usePerfiles();
   const { perfil } = useAuth();
   const { avisar } = useAvisos();
+  const { data: unidades } = useUnidades();
   const [nuevo, setNuevo] = useState(NUEVO);
   const [restableciendo, setRestableciendo] = useState<Perfil | null>(null);
 
@@ -45,8 +47,8 @@ export default function Usuarios() {
       valor,
     }: {
       user_id: string;
-      campo: "rol" | "activo" | "nombre";
-      valor: string | boolean;
+      campo: "rol" | "activo" | "nombre" | "unidad_id";
+      valor: string | boolean | null;
     }) => {
       const { error } = await supabase()
         .from("perfiles")
@@ -55,11 +57,18 @@ export default function Usuarios() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries(),
-    onError: (e: Error) => avisar(e.message, "error"),
+    onError: (e: Error) =>
+      avisar(
+        e.message.includes("perfiles_unidad_requerida")
+          ? "Asigne una unidad antes de activar a un capturador o invitado"
+          : e.message,
+        "error"
+      ),
   });
 
   const nuevoValido =
-    nuevo.nombre.trim() !== "" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevo.correo.trim()) && nuevo.contrasena.length >= MIN_CONTRASENA;
+    nuevo.nombre.trim() !== "" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevo.correo.trim()) && nuevo.contrasena.length >= MIN_CONTRASENA &&
+    (nuevo.rol === "admin" || nuevo.unidad_id !== "");
 
   return (
     <>
@@ -95,6 +104,19 @@ export default function Usuarios() {
               <option value="admin">Administrador</option>
             </select>
           </label>
+          <label className="campo" style={{ maxWidth: 170 }}>
+            <span>Unidad</span>
+            <select
+              value={nuevo.rol === "admin" ? "" : nuevo.unidad_id}
+              disabled={nuevo.rol === "admin"}
+              onChange={(e) => setNuevo({ ...nuevo, unidad_id: e.target.value })}
+            >
+              <option value="">{nuevo.rol === "admin" ? "Todas" : "Seleccione"}</option>
+              {(unidades ?? []).map((u) => (
+                <option key={u.id} value={u.id}>{u.nombre}</option>
+              ))}
+            </select>
+          </label>
           <label className="campo" style={{ maxWidth: 180 }}>
             <span>Contraseña inicial</span>
             <input
@@ -119,6 +141,7 @@ export default function Usuarios() {
               <th>Nombre</th>
               <th>Correo</th>
               <th>Rol</th>
+              <th>Unidad</th>
               <th>Activo</th>
               <th></th>
             </tr>
@@ -148,6 +171,18 @@ export default function Usuarios() {
                     <option value="admin">Administrador</option>
                     <option value="capturador">Capturador</option>
                     <option value="invitado">Invitado (solo consulta)</option>
+                  </select>
+                </td>
+                <td>
+                  <select
+                    value={p.unidad_id ?? ""}
+                    disabled={p.rol === "admin"}
+                    onChange={(e) => actualizar.mutate({ user_id: p.user_id, campo: "unidad_id", valor: e.target.value || null })}
+                  >
+                    <option value="">{p.rol === "admin" ? "Todas" : "Sin unidad"}</option>
+                    {(unidades ?? []).map((u) => (
+                      <option key={u.id} value={u.id}>{u.nombre}</option>
+                    ))}
                   </select>
                 </td>
                 <td>

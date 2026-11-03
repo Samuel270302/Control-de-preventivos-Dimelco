@@ -4,6 +4,7 @@ import { leerConexion } from "./lib/config";
 import { supabase } from "./lib/supabase";
 import { AuthProvider, useAuth } from "./auth";
 import { useTiempoReal } from "./lib/queries";
+import { UnidadProvider } from "./lib/unidad";
 import Layout from "./components/Layout";
 import { AvisosProvider } from "./components/Avisos";
 import Setup from "./pages/Setup";
@@ -27,7 +28,11 @@ function Interior() {
   if (cargando) return <div className="pantalla-centro">Cargando…</div>;
   if (!session) return <Login />;
   if (!perfil?.activo) return <AccesoPendiente correo={session.user.email ?? ""} />;
-  return <ConRealtime esAdmin={esAdmin} puedeCapturar={puedeCapturar} />;
+  return (
+    <UnidadProvider>
+      <ConRealtime esAdmin={esAdmin} puedeCapturar={puedeCapturar} />
+    </UnidadProvider>
+  );
 }
 
 function AccesoPendiente({ correo }: { correo: string }) {

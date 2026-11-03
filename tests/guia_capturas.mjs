@@ -16,7 +16,7 @@ const [FIX, SALIDA] = process.argv.slice(2);
 const BD = process.env.BD_LOCAL ?? "host=/home/user/.pgrun port=5433 user=dev dbname=hemco";
 const HOY = "2026-10-22";
 const TABLAS = ["v_control_pm", "v_control_40", "equipos", "componentes", "planes_mp", "cambios_horometro",
-  "v_lecturas", "registros_pm", "parametros", "columnas_control", "v_registros_pm", "v_cumplimiento_pm", "v_utilizacion_mensual"];
+  "v_lecturas", "registros_pm", "parametros", "columnas_control", "v_registros_pm", "v_cumplimiento_pm", "v_utilizacion_mensual", "unidades", "v_ultima_lectura"];
 const datos = Object.fromEntries(TABLAS.map((n) => [n, JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8"))]));
 const ID = "00000000-0000-0000-0000-000000000002";
 datos.perfiles = [

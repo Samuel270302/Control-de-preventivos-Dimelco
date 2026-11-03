@@ -2,6 +2,7 @@ import EnlaceEquipo from "../components/EnlaceEquipo";
 import { useMemo, useState } from "react";
 import { useControlPm, useLecturasDesde, usePmDesde } from "../lib/queries";
 import { EsqueletoTabla } from "../components/Esqueleto";
+import { useNombreUnidad } from "../lib/unidad";
 import { fFecha, fNum, hoyISO, sumarDiasISO } from "../lib/fmt";
 import { PestaniasSistema, SISTEMAS } from "../lib/sistemas";
 import EstadoBadge from "../components/EstadoBadge";
@@ -19,6 +20,7 @@ interface Serie {
 
 export default function Graficas() {
   const hasta = hoyISO();
+  const unidad = useNombreUnidad();
   const desde = sumarDiasISO(hasta, -VENTANA_DIAS);
   const { data: control, isLoading: c1 } = useControlPm();
   const { data: lecturas, isLoading: c2 } = useLecturasDesde(desde);
@@ -65,7 +67,7 @@ export default function Graficas() {
     <>
       <h1>Evolución de horómetros</h1>
       <p className="subtitulo">
-        Horómetro acumulado del {fFecha(desde)} al {fFecha(hasta)} (últimos {VENTANA_DIAS} días) ·
+        {unidad ?? "Todas las unidades"} · horómetro acumulado del {fFecha(desde)} al {fFecha(hasta)} (últimos {VENTANA_DIAS} días) ·
         cada gráfica tiene su propia escala
       </p>
       <PestaniasSistema seccion={seccion} onCambio={setSeccion} />

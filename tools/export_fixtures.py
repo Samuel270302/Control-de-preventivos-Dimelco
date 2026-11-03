@@ -26,6 +26,8 @@ CONSULTAS = {
     "v_registros_pm": "select * from v_registros_pm order by fecha",
     "v_cumplimiento_pm": "select * from v_cumplimiento_pm order by fecha",
     "v_utilizacion_mensual": "select * from v_utilizacion_mensual order by mes",
+    "unidades": "select * from unidades order by orden",
+    "v_ultima_lectura": "select * from v_ultima_lectura",
 }
 
 
@@ -58,6 +60,7 @@ def main():
                 "correo": "demo@hemco.local",
                 "rol": "admin",
                 "activo": True,
+                "unidad_id": None,
             }],
             f, ensure_ascii=False)
     print("perfiles 1")
