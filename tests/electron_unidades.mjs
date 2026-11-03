@@ -101,11 +101,11 @@ async function probar(caso) {
       todas.includes("Boltec #1") && todas.includes("B1-37") && todas.includes("PS009"), `${todas.length} equipos`);
     await win.locator(".selector-unidad select").selectOption({ label: "Explotec" }); await win.waitForTimeout(600);
     const exp = await equiposControl();
-    r("Explotec: solo equipos B1-", exp.length === 13 && exp.every((c) => c.startsWith("B1-")), exp.join(" "));
+    r("Explotec: solo equipos B1- activos (B1-24 inactivo)", exp.length === 12 && !exp.includes("B1-24") && exp.every((c) => c.startsWith("B1-")), exp.join(" "));
     r("Explotec: el subtítulo nombra la unidad", ((await win.locator(".subtitulo").first().textContent()) ?? "").startsWith("Explotec"));
     await win.screenshot({ path: join(SALIDA, "u_admin_explotec.png") });
     await ir("#/equipos");
-    r("Explotec: el maestro muestra 13 equipos sin columna Unidad",
+    r("Explotec: el maestro muestra los 13 equipos, con B1-24 inactivo, sin columna Unidad",
       (await win.locator("tbody tr").count()) === 13 && (await win.locator("thead th", { hasText: "Unidad" }).count()) === 0);
     await win.locator(".selector-unidad select").selectOption({ label: "Veta Nueva" }); await win.waitForTimeout(600);
     await ir("#/control");
@@ -127,11 +127,11 @@ async function probar(caso) {
       ((await win.locator(".unidad-fija").textContent()) ?? "").includes("Explotec"));
     await ir("#/control");
     const exp = await equiposControl();
-    r("Capturador Explotec: solo sus 13 equipos", exp.length === 13 && exp.every((c) => c.startsWith("B1-")));
+    r("Capturador Explotec: solo sus 12 equipos activos", exp.length === 12 && exp.every((c) => c.startsWith("B1-")));
     await win.screenshot({ path: join(SALIDA, "u_capturador_explotec.png") });
     await ir("#/lecturas");
     const filas = await win.locator("tbody tr").count();
-    r("Lecturas: un renglón por horómetro de Explotec (25)", filas === 25, `${filas}`);
+    r("Lecturas: un renglón por horómetro activo de Explotec (24)", filas === 24, `${filas}`);
     const fila = win.locator("tbody tr", { hasText: "B1-37" }).filter({ hasText: "Diesel" }).first();
     const ultima = Number(((await fila.locator("td").nth(2).textContent()) ?? "0").replace(/,/g, ""));
     r("Lecturas: última lectura de B1-37 desde v_ultima_lectura", ultima > 1000, `${ultima}`);

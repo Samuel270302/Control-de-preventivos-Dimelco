@@ -64,6 +64,9 @@ def main():
     try:
         cur.execute("""select * from v_control_pm where unidad = 'Explotec' and tipo_horometro = 'Diesel'""")
         app = {r["cod_interno"]: r for r in cur.fetchall()}
+        cur.execute("""select e.cod_interno from equipos e join unidades u on u.id = e.unidad_id
+                       where u.nombre = 'Explotec' and not e.activo""")
+        inactivos = {r["cod_interno"] for r in cur.fetchall()}
     finally:
         cur.execute("update parametros set valor_texto = null where clave = 'fecha_referencia'")
         con.commit()
@@ -72,6 +75,9 @@ def main():
     proy = []
     for cod, f in sorted(libro.items()):
         r = app.get(cod)
+        if r is None and cod in inactivos:
+            print(f"{cod}: inactivo en la app (fuera de servicio), no se compara")
+            continue
         if r is None:
             print(f"{cod}: no está en la app")
             difs += 1

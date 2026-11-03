@@ -24,6 +24,9 @@ import psycopg2
 DSN_LOCAL = "host=/home/user/.pgrun port=5433 user=dev dbname=hemco"
 DATOS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "datos")
 
+# Explotec: equipos fuera de servicio al cargar (bitácora del libro), quedan inactivos.
+EXPLOTEC_INACTIVOS = {"B1-24": "fuera de servicio desde el 01/09/2026"}
+
 # Fecha y turno de la lectura de arranque de Veta Nueva (cierre de la semana 43).
 ARRANQUE_VN = (dt.date(2026, 10, 25), "Noche")
 
@@ -143,6 +146,9 @@ def explotec(cur, ruta, avisos):
             continue
         cod = str(cod).strip().upper()
         equipos[cod] = equipo(cur, unidad, cod, str(f[6]).strip(), fecha(f[7]))
+        if cod in EXPLOTEC_INACTIVOS:
+            cur.execute("update equipos set activo = false where id = %s", (equipos[cod],))
+            avisos.append(f"{cod}: queda inactivo, {EXPLOTEC_INACTIVOS[cod]}")
         comps[(cod, "Diesel")] = componente(cur, equipos[cod], "Diesel", "Motor Diésel", "Motor Diésel", 1, "DIESEL-EXP")
         # Horómetro de perforación: los marcados "Sí" y los que tienen lecturas de percusión.
         if str(f[8]).strip().lower() in ("sí", "si") or cod in lecturas_perf:
@@ -150,7 +156,14 @@ def explotec(cur, ruta, avisos):
                 cur, equipos[cod], "Percusión #1", "Perforadora", "Perforadora", 3, None)
     print(f"equipos: {len(equipos)} · componentes: {len(comps)}")
 
-    # Lecturas: hoja Horometros (fecha, equipo, turno, tipo, lectura)
+    # Lecturas: hoja Horometros (fecha, equipo, turno, tipo, lectura).
+    # Una lectura de perforación mayor que todo el horómetro diésel del equipo no es posible
+    # (el martillo trabaja menos horas que el motor): no se carga y se informa.
+    max_diesel = {}
+    for f in filas_hor:
+        if str(f[3]).strip().lower() == "diesel" and f[4] is not None:
+            cod = str(f[1]).strip().upper()
+            max_diesel[cod] = max(max_diesel.get(cod, 0), float(f[4]))
     vistas = {}
     for i, f in enumerate(filas_hor, start=2):
         cod = str(f[1]).strip().upper()
@@ -159,6 +172,9 @@ def explotec(cur, ruta, avisos):
         t = turno(f[2])
         if comp is None or t is None or f[4] is None:
             avisos.append(f"Horometros fila {i}: sin componente, turno o lectura ({cod}, {f[3]}, {f[2]})")
+            continue
+        if tipo == "Percusión #1" and float(f[4]) > max_diesel.get(cod, float("inf")):
+            avisos.append(f"Horometros fila {i}: {cod} perforación {f[4]} h mayor que su diésel ({max_diesel[cod]} h); no se carga")
             continue
         clave = (comp, fecha(f[0]), t)
         if clave in vistas:

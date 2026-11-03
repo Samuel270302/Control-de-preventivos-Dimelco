@@ -107,9 +107,10 @@ export default function Lecturas() {
 
   const filas = useMemo(() => {
     if (!equipos || !componentes) return [];
-    const nombreEq = new Map(equipos.map((e) => [e.id, e.cod_interno]));
+    // Solo equipos activos: un equipo fuera de servicio no se captura.
+    const nombreEq = new Map(equipos.filter((e) => e.activo).map((e) => [e.id, e.cod_interno]));
     return componentes
-      .filter((c) => c.activo)
+      .filter((c) => c.activo && nombreEq.has(c.equipo_id))
       .map((c) => ({ comp: c, equipo: nombreEq.get(c.equipo_id) ?? "" }))
       .sort(
         (a, b) =>
