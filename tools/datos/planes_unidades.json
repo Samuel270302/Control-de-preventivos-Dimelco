@@ -1,0 +1,12 @@
+[
+  {"clave": "DIESEL-EXP", "sistema": "Motor Diésel", "componente_desc": "Motor diésel (Explotec)",
+   "aplica_a": "Explotec: SmartROC T45, PowerROC T35/T50, FlexiROC T35, XQZ 152, XCZ 115",
+   "tipo_horometro_desc": "Diesel", "intervalo_h": 250, "ciclo_gamas": [250, 500, 750, 1000, 250, 500, 750, 2000],
+   "dias_programar": 7, "dias_verificar": 7,
+   "observaciones": "Libro de Explotec (corte 30/10/2026): programar a 7 días; no usa aviso aparte de repuestos."},
+  {"clave": "DIESEL-VN", "sistema": "Motor Diésel", "componente_desc": "Motor diésel (Veta Nueva)",
+   "aplica_a": "Veta Nueva: scooptram, jumbos, Simba, camiones",
+   "tipo_horometro_desc": "Diesel", "intervalo_h": 250, "ciclo_gamas": [250, 500, 750, 1000],
+   "dias_programar": 10, "dias_verificar": 28,
+   "observaciones": "Reporte semana 43: gamas 250, 500, 250 (750) y 1000. Umbrales iguales a HEMCO, por confirmar."}
+]

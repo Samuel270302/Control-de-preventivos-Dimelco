@@ -1,0 +1,19 @@
+cod_interno,modelo,fecha_ultimo_pm,gama_ultimo_pm,horometro_ultimo_pm,lectura_actual,proxima_gama_reporte,nota
+PS008,Scooptram,2026-07-31,1000,15096.0,15237.8,250,
+PS009,R1600H,2026-10-25,1000,10309.8,10334.9,250,
+PS011,ST1030,2026-10-24,500,6957.0,6988.0,250,
+PS012,ST1030,2026-09-27,750,5514.8,5583.5,1000,Reporte: gama 250; la siguiente es 1000
+J007,Boomer S1D,2026-06-01,1000,2758.0,2758.1,250,Reporte: habilitar horómetro diésel
+J009,Boomer,2026-07-30,500,2157.0,2256.5,250,
+J011,Boomer S1D,2026-09-05,750,499.7,507.3,1000,Reporte: gama 250; la siguiente es 1000
+L006,Por confirmar,2026-05-27,1000,1589.0,1640.0,250,
+L008,Simba S7D,2026-07-20,1000,1004.0,1037.9,250,
+L009,Simba S7D,2026-09-29,250,1340.9,1420.0,500,
+J006,Bolter 99,2026-08-30,,7992.0,8034.9,250,Revisar: el reporte indica gama de 50 h
+J008,Bolter 99,2026-10-18,1000,3457.3,3457.3,250,
+J010,Boltec S10,2026-08-04,1000,1061.8,1221.7,250,
+SC001,Por confirmar,2025-12-26,250,464.0,701.5,500,
+D5,Por confirmar,2026-10-01,250,5103.0,5180.7,250,Revisar: el reporte indica 250 seguido de 250
+T010,Camión articulado,2026-10-08,750,25237.0,25280.4,1000,Reporte: gama 250 (750)
+T012,Por confirmar,2026-10-29,250,16692.2,16692.2,500,
+T013,Por confirmar,2026-09-27,1000,13274.7,13476.2,250,

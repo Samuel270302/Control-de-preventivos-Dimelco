@@ -5,8 +5,8 @@ Uso:
     python3 tools/import_excel.py <ruta al xlsx> [--dsn <cadena de conexión>] [--fecha-ref AAAA-MM-DD]
 
 Carga en orden: planes_mp, equipos, componentes, cambios_horometro, lecturas,
-registros_pm y registros manuales del Scooptram #4. Borra los datos previos de
-esas tablas (carga total, pensada para la puesta en marcha).
+registros_pm y registros manuales del Scooptram #4. Reemplaza solo los datos de la
+unidad HEMCO (carga total de esa unidad); los planes se actualizan por clave.
 """
 import argparse
 import datetime as dt
@@ -62,11 +62,19 @@ def main():
     cur = con.cursor()
     avisos = []
 
+    # Solo se reemplaza la unidad HEMCO: las demás unidades y sus planes no se tocan.
+    cur.execute("select id from unidades where nombre = 'HEMCO'")
+    unidad = cur.fetchone()[0]
     cur.execute("""
-        delete from registros_manuales; delete from lecturas;
-        delete from registros_pm; delete from cambios_horometro;
-        delete from componentes; delete from equipos; delete from planes_mp;
-    """)
+        create temp table comp_hemco on commit drop as
+          select c.id from componentes c join equipos e on e.id = c.equipo_id where e.unidad_id = %(u)s;
+        delete from registros_manuales where componente_id in (select id from comp_hemco);
+        delete from lecturas where componente_id in (select id from comp_hemco);
+        delete from registros_pm where componente_id in (select id from comp_hemco);
+        delete from cambios_horometro where componente_id in (select id from comp_hemco);
+        delete from componentes where id in (select id from comp_hemco);
+        delete from equipos where unidad_id = %(u)s;
+    """, {"u": unidad})
     # El histórico del libro trae lecturas y registros PM que los controles rechazarían;
     # se carga tal cual y el control vuelve a quedar activo al terminar.
     cur.execute("""
@@ -93,7 +101,14 @@ def main():
             """insert into planes_mp (clave, sistema, componente_desc, aplica_a,
                tipo_horometro_desc, intervalo_h, ciclo_gamas, dias_programar,
                dias_verificar, base_sin_pm, kits_sap, observaciones, orden)
-               values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+               values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+               on conflict (clave) do update set sistema = excluded.sistema,
+                 componente_desc = excluded.componente_desc, aplica_a = excluded.aplica_a,
+                 tipo_horometro_desc = excluded.tipo_horometro_desc, intervalo_h = excluded.intervalo_h,
+                 ciclo_gamas = excluded.ciclo_gamas, dias_programar = excluded.dias_programar,
+                 dias_verificar = excluded.dias_verificar, base_sin_pm = excluded.base_sin_pm,
+                 kits_sap = excluded.kits_sap, observaciones = excluded.observaciones,
+                 orden = excluded.orden""",
             (clave.strip(), ws.cell(r, 2).value, ws.cell(r, 3).value,
              ws.cell(r, 4).value, ws.cell(r, 5).value, num(ws.cell(r, 6).value),
              gamas, int(ws.cell(r, 15).value), int(ws.cell(r, 16).value),
@@ -117,10 +132,10 @@ def main():
             continue
         cod = str(cod).strip()
         cur.execute(
-            """insert into equipos (cod_interno, cod_sap, modelo, fecha_inicio_operacion)
-               values (%s,%s,%s,%s) returning id""",
+            """insert into equipos (cod_interno, cod_sap, modelo, fecha_inicio_operacion, unidad_id)
+               values (%s,%s,%s,%s,%s) returning id""",
             (cod, sap_tabla.get((cod, "Equipo")), str(ws.cell(r, 7).value).strip(),
-             fecha(ws.cell(r, 8).value)))
+             fecha(ws.cell(r, 8).value), unidad))
         equipos[cod] = cur.fetchone()[0]
         n += 1
     print(f"equipos: {n}")
