@@ -42,7 +42,7 @@ export default function EditorEquipo({
   const guardar = useMutation({
     mutationFn: async () => {
       if (!eq.cod_interno.trim() || !eq.modelo.trim())
-        throw new Error("Código interno y modelo son obligatorios");
+        throw new Error("Código de equipo y modelo son obligatorios");
       if (comps.some((c) => !c.nombre.trim()))
         throw new Error("Cada componente necesita un nombre");
       const { error } = await supabase()
@@ -103,7 +103,7 @@ export default function EditorEquipo({
           </select>
         </label>
         <label className="campo">
-          <span>Código interno</span>
+          <span>Cód. equipo</span>
           <input value={eq.cod_interno} onChange={(e) => setEq({ ...eq, cod_interno: e.target.value })} />
         </label>
         <label className="campo">
@@ -111,7 +111,7 @@ export default function EditorEquipo({
           <input value={eq.modelo} onChange={(e) => setEq({ ...eq, modelo: e.target.value })} />
         </label>
         <label className="campo">
-          <span>Cód. SAP</span>
+          <span>Cód. interno</span>
           <input value={eq.cod_sap ?? ""} onChange={(e) => setEq({ ...eq, cod_sap: e.target.value })} />
         </label>
         <label className="campo">
@@ -134,7 +134,7 @@ export default function EditorEquipo({
               <th>Sistema</th>
               <th>Sección</th>
               <th>Plan MP</th>
-              <th>Cód. SAP</th>
+              <th>Cód. interno</th>
               <th>Rutina 40 h</th>
               <th>Activo</th>
             </tr>

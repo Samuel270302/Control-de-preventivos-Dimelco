@@ -94,7 +94,7 @@ export default function Usuarios() {
           </label>
           <label className="campo" style={{ maxWidth: 230 }}>
             <span>Correo (usuario de acceso)</span>
-            <input value={nuevo.correo} onChange={(e) => setNuevo({ ...nuevo, correo: e.target.value })} placeholder="nombre@hemco.local" />
+            <input value={nuevo.correo} onChange={(e) => setNuevo({ ...nuevo, correo: e.target.value })} placeholder="nombre@grupodimelco.com" />
           </label>
           <label className="campo" style={{ maxWidth: 190 }}>
             <span>Rol</span>

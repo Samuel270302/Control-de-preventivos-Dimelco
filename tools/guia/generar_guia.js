@@ -152,7 +152,7 @@ const cuerpo = [
   h1("2. Entrar a la app"),
   ...pasos([
     "Abre Preventivos HEMCO desde el acceso directo del escritorio.",
-    ["Escribe tu correo de usuario completo (por ejemplo, planeador.martha@hemco.local) y tu contraseña. El administrador te entrega la contraseña inicial."],
+    ["Escribe tu correo de usuario completo (por ejemplo, planeador.martha@grupodimelco.com) y tu contraseña. El administrador te entrega la contraseña inicial."],
     ["Haz clic en ", n("Entrar"), ". La primera pantalla es el Control PM."],
   ]),
   ...figura("01_entrada_c.png", "Pantalla de entrada.", 300),

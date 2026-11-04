@@ -48,7 +48,7 @@ const numero = (v: number | string | null | undefined): number | null =>
 
 export const COLUMNAS: Record<string, DefColumna> = {
   nombre: { num: false, render: (f) => f.nombre, valor: (f) => f.nombre },
-  cod_sap: { num: false, render: (f) => f.cod_sap ?? "Sin SAP", valor: (f) => f.cod_sap ?? "Sin SAP" },
+  cod_sap: { num: false, render: (f) => f.cod_sap ?? "Sin cód. interno", valor: (f) => f.cod_sap ?? "Sin cód. interno" },
   modelo: { num: false, render: (f) => f.modelo, valor: (f) => f.modelo },
   fecha_ultimo_pm: { num: false, fecha: true, render: (f) => fFecha(f.fecha_ultimo_pm), valor: (f) => f.fecha_ultimo_pm },
   gama_ultimo_pm: {

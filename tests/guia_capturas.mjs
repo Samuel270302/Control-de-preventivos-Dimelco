@@ -20,8 +20,8 @@ const TABLAS = ["v_control_pm", "v_control_40", "equipos", "componentes", "plane
 const datos = Object.fromEntries(TABLAS.map((n) => [n, JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8"))]));
 const ID = "00000000-0000-0000-0000-000000000002";
 datos.perfiles = [
-  { user_id: ID, nombre: "Planeador Martha 850", correo: "planeador.martha@hemco.local", rol: "capturador", activo: true },
-  { user_id: "00000000-0000-0000-0000-000000000001", nombre: "Samuel Zapata", correo: "samuel@hemco.local", rol: "admin", activo: true },
+  { user_id: ID, nombre: "Planeador Martha 850", correo: "planeador.martha@grupodimelco.com", rol: "capturador", activo: true },
+  { user_id: "00000000-0000-0000-0000-000000000001", nombre: "Samuel Zapata", correo: "samuel@grupodimelco.com", rol: "admin", activo: true },
 ];
 // Lo capturado en la app aparece a nombre del capturador.
 for (const l of datos.v_lecturas) if (l.origen === "app" && !l.creado_por) l.creado_por = ID;
@@ -32,7 +32,7 @@ datos.lecturas = [{ ...base, id: "anulada-1", anulada: true, creado_por: ID, ori
   anulado_en: "2026-10-21T14:10:00Z" }];
 
 const sql = async (q) => (await sh("psql", [BD, "-tAc", q])).stdout.trim();
-const usuario = { id: ID, email: "planeador.martha@hemco.local", aud: "authenticated", role: "authenticated",
+const usuario = { id: ID, email: "planeador.martha@grupodimelco.com", aud: "authenticated", role: "authenticated",
   app_metadata: {}, user_metadata: {}, created_at: "2026-10-01T00:00:00Z" };
 
 const app = await _electron.launch({ executablePath: join(RAIZ, "node_modules/electron/dist/electron"),
@@ -113,7 +113,7 @@ await win.evaluate(() => {
   localStorage.setItem("preventivos.conexion", JSON.stringify({ url: "https://demo.supabase.co", anonKey: "demo-llave-anon-0123456789" }));
 });
 await win.reload(); await win.waitForTimeout(1200);
-await win.locator('input[type="email"], input[autocomplete="username"], input').first().fill("planeador.martha@hemco.local");
+await win.locator('input[type="email"], input[autocomplete="username"], input').first().fill("planeador.martha@grupodimelco.com");
 await win.locator('input[type="password"]').fill("contraseña");
 await foto("01_entrada");
 await win.getByRole("button", { name: /Entrar/ }).click(); await win.waitForTimeout(2500);

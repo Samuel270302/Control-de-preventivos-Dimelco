@@ -42,7 +42,7 @@ function filtrarUnidad(datos, unidad) {
 async function probarRol(rol) {
   const datos = Object.fromEntries(TABLAS.map((n) => [n, fixture(n)]));
   datos.perfiles = [...datos.perfiles, { user_id: "00000000-0000-0000-0000-000000000002", nombre: "Planeador Martha 850",
-    correo: "planeador.martha@hemco.local", rol: "capturador", activo: true }];
+    correo: "planeador.martha@grupodimelco.com", rol: "capturador", activo: true }];
   // Una lectura anulada por el admin para ver la auditoría en el Historial.
   const unidadHemco = datos.unidades.find((u) => u.nombre === "HEMCO").id;
   const eqHemco = new Set(datos.equipos.filter((e) => e.unidad_id === unidadHemco).map((e) => e.id));
@@ -67,11 +67,13 @@ async function probarRol(rol) {
   }, SALIDA);
   const ctx = app.context();
   const escrituras = [];
+  const cuerpos = [];
   await ctx.route("**/rest/v1/**", async (route) => {
     const req = route.request(); const url = new URL(req.url());
     const tabla = url.pathname.split("/rest/v1/")[1];
     if (req.method() !== "GET") {
       escrituras.push(`${req.method()} ${tabla}`);
+      cuerpos.push({ metodo: req.method(), tabla, cuerpo: req.postData() ?? "" });
       if (tabla === "rpc/validar_lectura") {
         // El control de lecturas se resuelve con la función real de la base local.
         const a = JSON.parse(req.postData());
@@ -101,7 +103,7 @@ async function probarRol(rol) {
       escrituras.push(`PUT auth ${rt.request().postData()}`);
       // Supabase responde con el usuario completo
       return rt.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ id: "00000000-0000-0000-0000-000000000001",
-        email: "demo@hemco.local", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-10-01T00:00:00Z" }) });
+        email: "demo@grupodimelco.com", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: "2026-10-01T00:00:00Z" }) });
     }
     return rt.fulfill({ status: 200, contentType: "application/json", body: "{}" });
   });
@@ -120,7 +122,7 @@ async function probarRol(rol) {
     localStorage.setItem("preventivos.conexion", JSON.stringify({ url: "https://demo.supabase.co", anonKey: "demo-llave-anon-0123456789" }));
     localStorage.setItem("sb-demo-auth-token", JSON.stringify({ access_token: "demo", refresh_token: "demo", token_type: "bearer",
       expires_at: Math.floor(Date.now() / 1000) + 86400, expires_in: 86400,
-      user: { id: "00000000-0000-0000-0000-000000000001", email: "demo@hemco.local", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() } }));
+      user: { id: "00000000-0000-0000-0000-000000000001", email: "demo@grupodimelco.com", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() } }));
   });
   await win.reload(); await win.waitForTimeout(2500);
   if (rol === "inactivo") {
@@ -271,25 +273,52 @@ async function probarRol(rol) {
   if (rol === "admin") {
     await ir("#/usuarios");
     await win.locator('label:has-text("Nuevo usuario: nombre") input').fill("Planeador turno B");
-    await win.locator('label:has-text("Correo") input').fill("planeador.b@hemco.local");
+    await win.locator('label:has-text("Correo") input').fill("planeador.b@grupodimelco.com");
     r("0.5.0: alta bloqueada sin unidad", await win.getByRole("button", { name: "Crear usuario" }).isDisabled());
     await win.locator('.panel-formulario label:has-text("Unidad") select').selectOption({ label: "HEMCO" });
     await win.locator('label:has-text("Contraseña inicial") input').fill("Clave1234");
     await win.screenshot({ path: join(SALIDA, "f7_usuarios.png") });
     await win.getByRole("button", { name: "Crear usuario" }).click(); await win.waitForTimeout(800);
     const alta = escrituras.find((e) => e.startsWith("FUNC") && e.includes('"crear"')) ?? "";
-    r("F7: alta de usuario llama a la función con los datos", alta.includes("planeador.b@hemco.local") && alta.includes('"rol":"capturador"') && alta.includes(`"unidad_id":"${HEMCO}"`), alta.slice(0, 120));
+    r("F7: alta de usuario llama a la función con los datos", alta.includes("planeador.b@grupodimelco.com") && alta.includes('"rol":"capturador"') && alta.includes(`"unidad_id":"${HEMCO}"`), alta.slice(0, 120));
     r("F7: el formulario se limpia tras crear", (await win.locator('label:has-text("Correo") input').inputValue()) === "");
-    r("Usuarios: el rol propio no se puede cambiar", await win.locator("tbody tr", { hasText: "demo@hemco.local" }).locator("select").first().isDisabled());
-    const filaMartha = win.locator("tbody tr", { hasText: "planeador.martha@hemco.local" });
+    r("Usuarios: el rol propio no se puede cambiar", await win.locator("tbody tr", { hasText: "demo@grupodimelco.com" }).locator("select").first().isDisabled());
+    const filaMartha = win.locator("tbody tr", { hasText: "planeador.martha@grupodimelco.com" });
     await filaMartha.getByRole("button", { name: "Restablecer contraseña" }).click(); await win.waitForTimeout(300);
     const dlgR = win.locator("dialog[open]");
     await dlgR.locator("input").nth(0).fill("ClaveNueva99"); await dlgR.locator("input").nth(1).fill("ClaveNueva99");
     await dlgR.getByRole("button", { name: "Restablecer" }).click(); await win.waitForTimeout(800);
     r("F7: restablecer contraseña de otro usuario", escrituras.some((e) => e.startsWith("FUNC") && e.includes('"restablecer"') && e.includes("00000000-0000-0000-0000-000000000002")));
-    r("F7: sin botón de restablecer para la cuenta propia", (await win.locator("tbody tr", { hasText: "demo@hemco.local" }).getByRole("button", { name: "Restablecer contraseña" }).count()) === 0);
+    r("F7: sin botón de restablecer para la cuenta propia", (await win.locator("tbody tr", { hasText: "demo@grupodimelco.com" }).getByRole("button", { name: "Restablecer contraseña" }).count()) === 0);
     await ir("#/equipos");
     r("Equipos: formularios de alta presentes", (await win.getByRole("button", { name: "Crear equipo" }).count()) === 1 && (await win.getByRole("button", { name: "Crear componente" }).count()) === 1);
+    const encab = await win.locator(".contenido thead").first().locator("th").allTextContents();
+    r("0.5.3: maestro con Cód. equipo y Cód. interno", encab.includes("Cód. equipo") && encab.includes("Cód. interno") && !encab.includes("SAP"), encab.join(" | "));
+
+    await ir("#/plan");
+    await win.getByRole("button", { name: "Nuevo plan" }).click(); await win.waitForTimeout(300);
+    const dlgP = win.locator("dialog[open]");
+    r("0.5.3: Nuevo plan abre el formulario vacío", ((await dlgP.locator("h1").textContent()) ?? "").includes("Nuevo plan") &&
+      await dlgP.getByRole("button", { name: "Crear plan" }).isDisabled());
+    await dlgP.locator('label:has-text("Clave") input').fill("diesel li");
+    r("0.5.3: la clave se escribe en mayúsculas y sin espacios", (await dlgP.locator('label:has-text("Clave") input').inputValue()) === "DIESEL-LI");
+    await dlgP.locator('label:has-text("Ciclo de gamas") input').fill("250, 500, 750, 1000");
+    await dlgP.locator('label:has-text("Componente") input').fill("Furukawa L100");
+    await win.screenshot({ path: join(SALIDA, "p_nuevo_plan.png") });
+    await dlgP.getByRole("button", { name: "Crear plan" }).click(); await win.waitForTimeout(800);
+    const altaPlan = cuerpos.find((c) => c.metodo === "POST" && c.tabla === "planes_mp")?.cuerpo ?? "";
+    r("0.5.3: crear plan inserta en planes_mp", altaPlan.includes('"clave":"DIESEL-LI"') && altaPlan.includes('"ciclo_gamas":[250,500,750,1000]') &&
+      altaPlan.includes('"sistema":"Motor Diésel"') && (await win.locator("dialog[open]").count()) === 0, altaPlan.slice(0, 160));
+    const nPost = cuerpos.filter((c) => c.metodo === "POST" && c.tabla === "planes_mp").length;
+    await win.getByRole("button", { name: "Copiar" }).first().click(); await win.waitForTimeout(300);
+    const dlgC = win.locator("dialog[open]");
+    r("0.5.3: Copiar trae el ciclo del plan y deja la clave vacía", (await dlgC.locator('label:has-text("Clave") input').inputValue()) === "" &&
+      (await dlgC.locator('label:has-text("Ciclo de gamas") input').inputValue()).length > 0);
+    await dlgC.locator('label:has-text("Clave") input').fill("DIESEL");
+    await dlgC.getByRole("button", { name: "Crear plan" }).click(); await win.waitForTimeout(600);
+    r("0.5.3: no deja crear un plan con clave repetida",
+      cuerpos.filter((c) => c.metodo === "POST" && c.tabla === "planes_mp").length === nPost && (await win.locator("dialog[open]").count()) === 1);
+    await dlgC.getByRole("button", { name: "Cancelar" }).click(); await win.waitForTimeout(300);
   }
 
   // Ventana mínima 1100×700

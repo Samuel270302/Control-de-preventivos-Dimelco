@@ -124,7 +124,7 @@ export default function FichaEquipo() {
         )}
       </div>
       <p className="subtitulo">
-        {equipo.modelo} · SAP {equipo.cod_sap ?? "sin código"}
+        {equipo.modelo} · Cód. interno {equipo.cod_sap ?? "sin código"}
         {equipo.fecha_inicio_operacion && ` · en operación desde ${fFecha(equipo.fecha_inicio_operacion)}`} ·{" "}
         {comps.length} componente(s)
       </p>

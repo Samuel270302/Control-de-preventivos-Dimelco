@@ -10,13 +10,66 @@ export default function PlanMpPage() {
   const { data: planes } = usePlanes();
   const { data: parametros } = useParametros();
   const [editando, setEditando] = useState<PlanMp | null>(null);
+  // Plan nuevo: vacío o copiado de otro, con la clave por escribir.
+  const [esNuevo, setEsNuevo] = useState(false);
   const { avisar } = useAvisos();
+
+  const abrirNuevo = (base?: PlanMp) => {
+    const orden = Math.max(0, ...(planes ?? []).map((p) => p.orden)) + 1;
+    setEsNuevo(true);
+    setEditando(
+      base
+        ? { ...base, clave: "", componente_desc: base.componente_desc, orden }
+        : { clave: "", sistema: "Motor Diésel", componente_desc: null, aplica_a: null, tipo_horometro_desc: null,
+            intervalo_h: 250, ciclo_gamas: [], dias_programar: 10, dias_verificar: 28, base_sin_pm: null,
+            kits_sap: null, observaciones: null, orden },
+    );
+  };
+  const cerrar = () => {
+    setEditando(null);
+    setEsNuevo(false);
+  };
+
+  const crear = useMutation({
+    mutationFn: async (p: PlanMp) => {
+      const clave = p.clave.trim().toUpperCase();
+      if (!clave) throw new Error("Escriba la clave del plan");
+      if ((planes ?? []).some((x) => x.clave.toUpperCase() === clave)) throw new Error(`Ya existe el plan ${clave}`);
+      if (!p.sistema.trim()) throw new Error("Escriba el sistema del plan");
+      if (!(p.intervalo_h > 0)) throw new Error("El intervalo debe ser mayor que 0");
+      const { error } = await supabase().from("planes_mp").insert({
+        clave,
+        sistema: p.sistema.trim(),
+        componente_desc: p.componente_desc?.trim() || null,
+        aplica_a: p.aplica_a,
+        tipo_horometro_desc: p.tipo_horometro_desc,
+        intervalo_h: p.intervalo_h,
+        ciclo_gamas: p.ciclo_gamas,
+        dias_programar: p.dias_programar,
+        dias_verificar: p.dias_verificar,
+        base_sin_pm: p.base_sin_pm,
+        kits_sap: p.kits_sap,
+        observaciones: p.observaciones,
+        orden: p.orden,
+      });
+      if (error) throw error;
+      return clave;
+    },
+    onSuccess: (clave) => {
+      cerrar();
+      avisar(`Plan ${clave} creado: asígnelo a los componentes en Equipos`);
+      qc.invalidateQueries();
+    },
+    onError: (e: Error) => avisar(e.message, "error"),
+  });
 
   const guardar = useMutation({
     mutationFn: async (p: PlanMp) => {
       const { error } = await supabase()
         .from("planes_mp")
         .update({
+          sistema: p.sistema,
+          componente_desc: p.componente_desc,
           intervalo_h: p.intervalo_h,
           ciclo_gamas: p.ciclo_gamas,
           dias_programar: p.dias_programar,
@@ -29,7 +82,7 @@ export default function PlanMpPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      setEditando(null);
+      cerrar();
       avisar("Plan actualizado: el control se recalcula al instante");
       qc.invalidateQueries();
     },
@@ -46,11 +99,18 @@ export default function PlanMpPage() {
 
   return (
     <>
-      <h1>Plan de mantenimiento preventivo</h1>
-      <p className="subtitulo">
-        El ciclo de gamas se lee de izquierda a derecha y vuelve a empezar al final. La clave del
-        plan no se cambia: los componentes la referencian.
-      </p>
+      <div style={{ display: "flex", alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>
+          <h1>Plan de mantenimiento preventivo</h1>
+          <p className="subtitulo">
+            El ciclo de gamas se lee de izquierda a derecha y vuelve a empezar al final. La clave del
+            plan no se cambia: los componentes la referencian.
+          </p>
+        </div>
+        <button className="boton-secundario" onClick={() => abrirNuevo()}>
+          Nuevo plan
+        </button>
+      </div>
       <div className="tabla-marco" style={{ marginBottom: 18 }}>
         <table>
           <thead>
@@ -63,7 +123,7 @@ export default function PlanMpPage() {
               <th className="num">Programar ≤ (días)</th>
               <th className="num">Verificar repuestos ≤ (días)</th>
               <th className="num">Base sin PM (h)</th>
-              <th>Kits SAP</th>
+              <th>Kit de mantenimiento</th>
               <th></th>
             </tr>
           </thead>
@@ -79,9 +139,12 @@ export default function PlanMpPage() {
                 <td className="num">{p.dias_verificar}</td>
                 <td className="num">{p.base_sin_pm ?? ""}</td>
                 <td style={{ whiteSpace: "normal", maxWidth: 220 }}>{p.kits_sap}</td>
-                <td>
+                <td style={{ whiteSpace: "nowrap" }}>
                   <button className="boton-plano" onClick={() => setEditando({ ...p })}>
                     Editar
+                  </button>{" "}
+                  <button className="boton-plano" title="Crear un plan nuevo a partir de este" onClick={() => abrirNuevo(p)}>
+                    Copiar
                   </button>
                 </td>
               </tr>
@@ -119,9 +182,12 @@ export default function PlanMpPage() {
       {editando && (
         <EditorPlan
           plan={editando}
+          nuevo={esNuevo}
+          sistemas={[...new Set((planes ?? []).map((p) => p.sistema))]}
+          ocupado={crear.isPending || guardar.isPending}
           onCambio={setEditando}
-          onGuardar={() => guardar.mutate(editando)}
-          onCerrar={() => setEditando(null)}
+          onGuardar={() => (esNuevo ? crear.mutate(editando) : guardar.mutate(editando))}
+          onCerrar={cerrar}
         />
       )}
     </>
@@ -130,11 +196,17 @@ export default function PlanMpPage() {
 
 function EditorPlan({
   plan,
+  nuevo,
+  sistemas,
+  ocupado,
   onCambio,
   onGuardar,
   onCerrar,
 }: {
   plan: PlanMp;
+  nuevo: boolean;
+  sistemas: string[];
+  ocupado: boolean;
   onCambio: (p: PlanMp) => void;
   onGuardar: () => void;
   onCerrar: () => void;
@@ -155,7 +227,35 @@ function EditorPlan({
         onCerrar();
       }}
     >
-      <h1 style={{ fontSize: 16 }}>Editar plan {plan.clave}</h1>
+      <h1 style={{ fontSize: 16 }}>{nuevo ? "Nuevo plan de MP" : `Editar plan ${plan.clave}`}</h1>
+      {nuevo && (
+        <label className="campo">
+          <span>Clave (por ejemplo DIESEL-LI; no se puede cambiar después)</span>
+          <input
+            autoFocus
+            value={plan.clave}
+            onChange={(e) => onCambio({ ...plan, clave: e.target.value.toUpperCase().replace(/\s+/g, "-") })}
+          />
+        </label>
+      )}
+      <div className="fila-campos">
+        <label className="campo">
+          <span>Sistema</span>
+          <input list="sistemas-plan" value={plan.sistema} onChange={(e) => onCambio({ ...plan, sistema: e.target.value })} />
+          <datalist id="sistemas-plan">
+            {sistemas.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+        </label>
+        <label className="campo">
+          <span>Componente / modelo</span>
+          <input
+            value={plan.componente_desc ?? ""}
+            onChange={(e) => onCambio({ ...plan, componente_desc: e.target.value })}
+          />
+        </label>
+      </div>
       <label className="campo">
         <span>Intervalo (h)</span>
         <input
@@ -203,7 +303,7 @@ function EditorPlan({
         </label>
       </div>
       <label className="campo">
-        <span>Kits SAP de overhaul</span>
+        <span>Kit de mantenimiento</span>
         <input
           value={plan.kits_sap ?? ""}
           onChange={(e) => onCambio({ ...plan, kits_sap: e.target.value })}
@@ -222,8 +322,8 @@ function EditorPlan({
         <button className="boton-plano" onClick={onCerrar}>
           Cancelar
         </button>
-        <button onClick={onGuardar} disabled={plan.ciclo_gamas.length === 0}>
-          Guardar
+        <button onClick={onGuardar} disabled={ocupado || plan.ciclo_gamas.length === 0 || (nuevo && !plan.clave.trim())}>
+          {nuevo ? "Crear plan" : "Guardar"}
         </button>
       </div>
     </dialog>

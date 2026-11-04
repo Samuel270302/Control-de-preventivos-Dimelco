@@ -55,7 +55,7 @@ export default function Equipos() {
   const crearEquipo = useMutation({
     mutationFn: async () => {
       if (!nuevoEq.cod.trim() || !nuevoEq.modelo.trim())
-        throw new Error("Código interno y modelo son obligatorios");
+        throw new Error("Código de equipo y modelo son obligatorios");
       if (!unidadEquipo) throw new Error("Elija la unidad del equipo");
       const { error } = await supabase().from("equipos").insert({
         unidad_id: unidadEquipo,
@@ -143,7 +143,7 @@ export default function Equipos() {
             </label>
           )}
           <label className="campo" style={{ maxWidth: 220 }}>
-            <span>Nuevo equipo: código interno</span>
+            <span>Nuevo equipo: código de equipo</span>
             <input value={nuevoEq.cod} onChange={(e) => setNuevoEq({ ...nuevoEq, cod: e.target.value })} placeholder="Scooptram #7" />
           </label>
           <label className="campo" style={{ maxWidth: 200 }}>
@@ -151,7 +151,7 @@ export default function Equipos() {
             <input value={nuevoEq.modelo} onChange={(e) => setNuevoEq({ ...nuevoEq, modelo: e.target.value })} />
           </label>
           <label className="campo" style={{ maxWidth: 140 }}>
-            <span>Cód. SAP</span>
+            <span>Cód. interno</span>
             <input value={nuevoEq.sap} onChange={(e) => setNuevoEq({ ...nuevoEq, sap: e.target.value })} />
           </label>
           <label className="campo" style={{ maxWidth: 170 }}>
@@ -214,7 +214,7 @@ export default function Equipos() {
             </select>
           </label>
           <label className="campo" style={{ maxWidth: 130 }}>
-            <span>Cód. SAP componente</span>
+            <span>Cód. interno componente</span>
             <input value={nuevoComp.sap} onChange={(e) => setNuevoComp({ ...nuevoComp, sap: e.target.value })} />
           </label>
           <label className="campo" style={{ maxWidth: 120, alignSelf: "flex-end" }}>
@@ -238,8 +238,8 @@ export default function Equipos() {
           <thead>
             <tr>
               {!unidadId && <th>Unidad</th>}
-              <th>Equipo</th>
-              <th>SAP</th>
+              <th>Cód. equipo</th>
+              <th>Cód. interno</th>
               <th>Modelo</th>
               <th>Inicio operación</th>
               <th>Componentes</th>
@@ -254,7 +254,7 @@ export default function Equipos() {
                 <td>
                   <Link to={`/equipo/${e.id}`} className="enlace-equipo">{e.cod_interno}</Link>
                 </td>
-                <td>{e.cod_sap ?? "Sin SAP"}</td>
+                <td>{e.cod_sap ?? "Sin cód. interno"}</td>
                 <td>{e.modelo}</td>
                 <td>{fFecha(e.fecha_inicio_operacion)}</td>
                 <td style={{ whiteSpace: "normal" }}>

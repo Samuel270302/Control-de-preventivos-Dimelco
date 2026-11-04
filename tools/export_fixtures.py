@@ -57,7 +57,7 @@ def main():
             [{
                 "user_id": "00000000-0000-0000-0000-000000000001",
                 "nombre": "Samuel Zapata",
-                "correo": "demo@hemco.local",
+                "correo": "demo@grupodimelco.com",
                 "rol": "admin",
                 "activo": True,
                 "unidad_id": None,

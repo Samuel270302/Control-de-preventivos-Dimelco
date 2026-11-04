@@ -62,7 +62,7 @@ await win.evaluate(() => {
   localStorage.setItem("sb-demo-auth-token", JSON.stringify({
     access_token: "demo", refresh_token: "demo", token_type: "bearer",
     expires_at: Math.floor(Date.now() / 1000) + 86400, expires_in: 86400,
-    user: { id: "00000000-0000-0000-0000-000000000001", email: "demo@hemco.local", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() },
+    user: { id: "00000000-0000-0000-0000-000000000001", email: "demo@grupodimelco.com", aud: "authenticated", role: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString() },
   }));
 });
 await win.reload();

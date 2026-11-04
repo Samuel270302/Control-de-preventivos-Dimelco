@@ -83,7 +83,7 @@ const sesion = {
   expires_in: 86400,
   user: {
     id: "00000000-0000-0000-0000-000000000001",
-    email: "demo@hemco.local",
+    email: "demo@grupodimelco.com",
     aud: "authenticated",
     role: "authenticated",
     app_metadata: {},
