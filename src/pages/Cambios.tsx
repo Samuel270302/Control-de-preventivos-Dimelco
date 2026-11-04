@@ -143,7 +143,7 @@ export default function Cambios() {
             {offsetPropuesto !== null && (
               <>
                 {" "}
-                · <b style={{ color: "var(--acento)" }}>Offset propuesto: {fNum(offsetPropuesto)} h</b>
+                · <b style={{ color: "var(--aviso)" }}>Offset propuesto: {fNum(offsetPropuesto)} h</b>
               </>
             )}
           </span>
