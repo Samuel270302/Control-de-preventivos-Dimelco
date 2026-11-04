@@ -1,0 +1,48 @@
+name: Reporte semanal de registros
+
+# Cada lunes arma un Excel con todas las tablas de registros (Control PM, lecturas, PM,
+# cambios de horómetro, registros manuales, anulados, equipos y planes) y lo envía por
+# Gmail. El Excel no se guarda en el repositorio ni como artefacto: el repositorio es público.
+# Requiere los secretos SUPABASE_DB_URL, CORREO_REPORTE (cuenta de Gmail que envía y recibe)
+# y CORREO_CLAVE_APP (contraseña de aplicación de esa cuenta).
+
+on:
+  schedule:
+    - cron: "17 12 * * 1" # lunes 06:17 hora de Nicaragua
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    env:
+      DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      CORREO_REPORTE: ${{ secrets.CORREO_REPORTE }}
+      CORREO_CLAVE_APP: ${{ secrets.CORREO_CLAVE_APP }}
+    steps:
+      - name: Verificar secretos
+        run: |
+          falta=0
+          for s in DB_URL CORREO_REPORTE CORREO_CLAVE_APP; do
+            if [ -z "${!s}" ]; then echo "::error::Falta el secreto ${s/DB_URL/SUPABASE_DB_URL} en Settings > Secrets and variables > Actions"; falta=1; fi
+          done
+          exit $falta
+
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: tools
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: pip install --quiet psycopg2-binary==2.9.10 openpyxl==3.1.5
+
+      - name: Armar y enviar el Excel
+        run: |
+          FECHA=$(TZ=America/Managua date +%Y-%m-%d)
+          python tools/reporte_registros.py --salida "Registros_Preventivos_${FECHA}.xlsx" --enviar
+          rm -f Registros_Preventivos_*.xlsx
