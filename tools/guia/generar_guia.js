@@ -1,4 +1,4 @@
-// Genera la Guía de usuario para capturadores (app 0.4.0) con capturas de pantalla.
+// Genera la Guía de usuario para capturadores (app 0.5.3) con capturas de pantalla.
 const fs = require("fs");
 const path = require("path");
 const {
@@ -113,13 +113,13 @@ const espacio = () => new Paragraph({ spacing: { after: 120 }, children: [] });
 // ---------------------------------------------------------------- contenido
 const portada = [
   new Paragraph({ spacing: { before: 1800, after: 300 }, children: [new ImageRun({ type: "png", data: fs.readFileSync(LOGO),
-    transformation: { width: 110, height: 110 }, altText: { title: "Logo", description: "Logo de Preventivos HEMCO", name: "logo" } })] }),
-  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Preventivos HEMCO", bold: true, size: 56, color: OSCURO })] }),
+    transformation: { width: 110, height: 110 }, altText: { title: "Logo", description: "Logo de Control de Preventivos - Dimelco", name: "logo" } })] }),
+  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Control de Preventivos - Dimelco", bold: true, size: 48, color: OSCURO })] }),
   new Paragraph({ spacing: { after: 400 }, border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: "F5B301", space: 8 } },
     children: [new TextRun({ text: "Guía de usuario para capturadores", size: 34, color: AMBAR })] }),
-  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Versión de la guía: 2.0", size: 22, color: GRIS })] }),
-  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Versión de la app: 0.4.0", size: 22, color: GRIS })] }),
-  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Fecha: 29/10/2026", size: 22, color: GRIS })] }),
+  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Versión de la guía: 3.0", size: 22, color: GRIS })] }),
+  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Versión de la app: 0.5.3", size: 22, color: GRIS })] }),
+  new Paragraph({ spacing: { after: 80 }, children: [new TextRun({ text: "Fecha: 04/11/2026", size: 22, color: GRIS })] }),
   new Paragraph({ spacing: { before: 600 }, children: [new TextRun({ text:
     "Las capturas de pantalla se tomaron con la cuenta de capturador Planeador Martha 850 y datos de prueba al 22/10/2026. Las cifras de tu pantalla serán las de la flota del día.",
     size: 20, color: GRIS, italics: true })] }),
@@ -139,7 +139,7 @@ const portada = [
 const cuerpo = [
   // 1
   h1("1. Qué es la app y qué hace un capturador"),
-  p("Preventivos HEMCO reemplaza el libro de Excel de registro de horómetros. La base de datos está en línea: lo que grabas en tu PC lo ven los demás usuarios en segundos, sin refrescar."),
+  p("Control de Preventivos - Dimelco reemplaza el libro de Excel de registro de horómetros. La base de datos está en línea: lo que grabas en tu PC lo ven los demás usuarios en segundos, sin refrescar."),
   p("Como capturador tienes tres tareas: capturar las lecturas de horómetro al cierre de cada turno, registrar los mantenimientos ejecutados y registrar los cambios o reinicios de horómetro. Además puedes consultar todas las pantallas de control, el programa de las próximas 4 semanas, los indicadores y el historial, y exportarlos a Excel."),
   p("Antes de guardar, la app revisa cada dato contra lo que ya está grabado. Si algo no cuadra, avisa o no deja grabar, y explica por qué."),
   h2("1.1 La regla de oro"),
@@ -151,7 +151,7 @@ const cuerpo = [
   // 2
   h1("2. Entrar a la app"),
   ...pasos([
-    "Abre Preventivos HEMCO desde el acceso directo del escritorio.",
+    "Abre Control de Preventivos - Dimelco desde el acceso directo del escritorio.",
     ["Escribe tu correo de usuario completo (por ejemplo, planeador.martha@grupodimelco.com) y tu contraseña. El administrador te entrega la contraseña inicial."],
     ["Haz clic en ", n("Entrar"), ". La primera pantalla es el Control PM."],
   ]),
@@ -171,7 +171,8 @@ const cuerpo = [
           p("El menú de la izquierda tiene dos grupos."),
           p("Para consultar: Control PM, Rutina 40 h, Gráficas, Programa 4 semanas, Indicadores e Historial."),
           p("Para capturar: Lecturas, Registro PM y Cambios horómetro."),
-          p("Al pie están tu nombre y tu rol, los botones Cambiar contraseña y Cerrar sesión, el estado de la conexión y la versión instalada (v0.4.0)."),
+          p("Al pie están tu nombre y tu rol, los botones Cambiar contraseña y Cerrar sesión, el estado de la conexión y la versión instalada (v0.5.3)."),
+          p("Debajo del logo está tu unidad minera, por ejemplo Unidad HEMCO. Solo ves y capturas los equipos de tu unidad; las demás unidades no aparecen en ninguna pantalla."),
           p("Las opciones Equipos, Plan MP y Usuarios son del administrador y no aparecen en tu menú."),
         ] }),
     ] })],
@@ -327,7 +328,7 @@ const cuerpo = [
 ];
 
 const doc = new Document({
-  creator: "Preventivos HEMCO",
+  creator: "Control de Preventivos - Dimelco",
   title: "Guía de usuario para capturadores",
   styles: {
     default: { document: { run: { font: "Calibri", size: 22, color: "252525" } } },
@@ -352,7 +353,7 @@ const doc = new Document({
   sections: [{
     properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 1440, right: 1440, bottom: 1300, left: 1440 } } },
     footers: { default: new Footer({ children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [
-      new TextRun({ text: "Preventivos HEMCO · Guía para capturadores · página ", size: 16, color: GRIS }),
+      new TextRun({ text: "Control de Preventivos - Dimelco · Guía para capturadores · página ", size: 16, color: GRIS }),
       new TextRun({ children: [PageNumber.CURRENT], size: 16, color: GRIS }),
     ] })] }) },
     children: [...portada, ...cuerpo],

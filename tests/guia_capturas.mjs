@@ -19,9 +19,19 @@ const TABLAS = ["v_control_pm", "v_control_40", "equipos", "componentes", "plane
   "v_lecturas", "registros_pm", "parametros", "columnas_control", "v_registros_pm", "v_cumplimiento_pm", "v_utilizacion_mensual", "unidades", "v_ultima_lectura"];
 const datos = Object.fromEntries(TABLAS.map((n) => [n, JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8"))]));
 const ID = "00000000-0000-0000-0000-000000000002";
+// La capturadora es de HEMCO: como hace la base con RLS, solo le llegan los datos de su unidad.
+const HEMCO = datos.unidades.find((u) => u.nombre === "HEMCO").id;
+datos.equipos = datos.equipos.filter((e) => e.unidad_id === HEMCO);
+const eqsHemco = new Set(datos.equipos.map((e) => e.id));
+datos.componentes = datos.componentes.filter((c) => eqsHemco.has(c.equipo_id));
+const compsHemco = new Set(datos.componentes.map((c) => c.id));
+for (const t of ["v_control_pm", "v_control_40", "v_cumplimiento_pm", "v_utilizacion_mensual"])
+  datos[t] = datos[t].filter((f) => f.unidad_id === HEMCO);
+for (const t of ["v_lecturas", "registros_pm", "v_registros_pm", "cambios_horometro", "v_ultima_lectura"])
+  datos[t] = datos[t].filter((f) => compsHemco.has(f.componente_id));
 datos.perfiles = [
-  { user_id: ID, nombre: "Planeador Martha 850", correo: "planeador.martha@grupodimelco.com", rol: "capturador", activo: true },
-  { user_id: "00000000-0000-0000-0000-000000000001", nombre: "Samuel Zapata", correo: "samuel@grupodimelco.com", rol: "admin", activo: true },
+  { user_id: ID, nombre: "Planeador Martha 850", correo: "planeador.martha@grupodimelco.com", rol: "capturador", activo: true, unidad_id: HEMCO },
+  { user_id: "00000000-0000-0000-0000-000000000001", nombre: "Samuel Zapata", correo: "samuel.e.zapata.t@gmail.com", rol: "admin", activo: true, unidad_id: null },
 ];
 // Lo capturado en la app aparece a nombre del capturador.
 for (const l of datos.v_lecturas) if (l.origen === "app" && !l.creado_por) l.creado_por = ID;
@@ -193,7 +203,7 @@ await win.locator("dialog[open] input").nth(0).fill("ClaveNueva2026");
 await win.locator("dialog[open] input").nth(1).fill("ClaveNueva2026");
 await foto("19_cambiar_contrasena");
 await win.getByRole("button", { name: "Cancelar" }).click();
-await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send("actualizacion-lista", "0.4.1"));
+await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send("actualizacion-lista", "0.5.4"));
 await win.waitForTimeout(400);
 await foto("20_actualizacion", win.locator(".aviso-actualizacion"));
 await foto("21_menu", win.locator(".menu"));

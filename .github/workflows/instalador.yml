@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    # La guía, las herramientas y las pruebas no cambian el instalador.
+    paths-ignore: ['docs/**', 'tools/**', 'tests/**', '**.md']
 
 permissions:
   contents: write
