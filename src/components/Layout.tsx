@@ -93,8 +93,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="logo">
           <img className="logo-app" src={logoApp} alt="" />
           <div>
-            <span className="logo-titulo">Preventivos</span>
-            <span className="logo-sub">HEMCO · mantenimiento</span>
+            <span className="logo-titulo">Control de Preventivos</span>
+            <span className="logo-sub">Dimelco · mantenimiento</span>
           </div>
         </div>
         <SelectorUnidad />

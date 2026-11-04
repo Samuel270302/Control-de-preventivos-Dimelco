@@ -3,6 +3,10 @@ import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { autoUpdater } from "electron-updater";
 
+// Los datos locales (conexión, sesión, unidad elegida) siguen en la carpeta del nombre
+// anterior de la app, para que las PC no pidan de nuevo la conexión ni el usuario.
+app.setPath("userData", path.join(app.getPath("appData"), "Preventivos HEMCO"));
+
 // El renderer no puede abrir ventanas nuevas (ver setWindowOpenHandler); los
 // reportes se convierten a PDF aquí, en una ventana oculta sin JavaScript.
 ipcMain.handle("guardar-pdf", async (evento, html: string, nombre: string) => {
@@ -58,7 +62,7 @@ function createWindow() {
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: "#111518",
-    title: "Preventivos HEMCO",
+    title: "Control de Preventivos - Dimelco",
     icon: path.join(__dirname, "../dist/icono.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -82,7 +86,7 @@ function createWindow() {
       buttons: ["Salir sin grabar", "Seguir capturando"],
       defaultId: 1,
       cancelId: 1,
-      title: "Preventivos HEMCO",
+      title: "Control de Preventivos - Dimelco",
       message: "Hay lecturas sin grabar",
       detail: "Si cierras la app, las lecturas escritas y no grabadas se pierden.",
     });

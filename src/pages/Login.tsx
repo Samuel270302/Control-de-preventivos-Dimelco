@@ -28,8 +28,8 @@ export default function Login() {
         <div className="login-marca">
           <img src={logoApp} alt="" />
           <div>
-            <div className="login-titulo">Preventivos</div>
-            <div className="login-sub">HEMCO · mantenimiento</div>
+            <div className="login-titulo">Control de Preventivos</div>
+            <div className="login-sub">Dimelco · mantenimiento</div>
           </div>
         </div>
         <label className="campo">

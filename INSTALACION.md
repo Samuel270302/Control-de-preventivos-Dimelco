@@ -2,7 +2,7 @@
 
 Requisitos: Windows 10 u 11 con internet.
 
-1. Descargar el instalador `Preventivos HEMCO Setup x.x.x.exe` (de la sección Releases del repositorio en GitHub) y ejecutarlo. Si Windows SmartScreen pregunta, clic en "Más información" y "Ejecutar de todas formas" (el instalador no está firmado con certificado comercial).
+1. Descargar el instalador `Control-de-Preventivos-Dimelco-Setup-x.x.x.exe` (de la sección Releases del repositorio en GitHub) y ejecutarlo. Si Windows SmartScreen pregunta, clic en "Más información" y "Ejecutar de todas formas" (el instalador no está firmado con certificado comercial).
 2. Al abrir la app por primera vez pide dos datos, que entrega el administrador:
    URL del proyecto: https://ltgsfgcmznausdotbyqk.supabase.co
    Llave anon: la entrega el administrador (es la llave pública del proyecto; no da acceso a los datos sin usuario y contraseña).

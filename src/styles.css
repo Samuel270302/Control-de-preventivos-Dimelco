@@ -48,8 +48,8 @@ body {
 .login-marca img { width: 64px; height: 64px; }
 .login-titulo { font-size: 24px; font-weight: 800; color: var(--oscuro-2); letter-spacing: -0.5px; }
 .login-sub { font-size: 13px; font-weight: 700; color: #b07800; letter-spacing: 3px; text-transform: uppercase; }
-.logo-titulo { display: block; font-size: 17px; font-weight: 600; color: var(--ambar); }
-.logo-sub { display: block; font-size: 11px; color: #b8b8b8; margin-top: 2px; }
+.logo-titulo { display: block; font-size: 15px; line-height: 1.2; font-weight: 600; color: var(--ambar); }
+.logo-sub { display: block; font-size: 11px; color: #b8b8b8; margin-top: 3px; white-space: nowrap; }
 .menu nav { flex: 1; padding: 10px 8px; overflow-y: auto; }
 .menu nav a {
   display: flex;

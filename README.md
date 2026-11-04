@@ -1,4 +1,4 @@
-# Preventivos HEMCO
+# Control de Preventivos - Dimelco
 
 Aplicación de escritorio (Windows) para el control de mantenimiento preventivo por horómetros de la flota HEMCO. Reemplaza el libro "Registro de horometros HEMCO v2.xlsx" conservando su lógica: lecturas por turno, acumulados por offset, ciclo de gamas, proyección de próximos PM y rutina de percusión de 40 h.
 

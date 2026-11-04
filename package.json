@@ -1,7 +1,7 @@
 {
   "name": "preventivos-hemco",
-  "productName": "Preventivos HEMCO",
-  "version": "0.5.1",
+  "productName": "Control de Preventivos - Dimelco",
+  "version": "0.5.2",
   "description": "Control de mantenimiento preventivo por horómetros",
   "private": true,
   "main": "dist-electron/main.js",
@@ -49,7 +49,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "Preventivos-HEMCO-Setup-${version}.${ext}"
+      "artifactName": "Control-de-Preventivos-Dimelco-Setup-${version}.${ext}"
     },
     "publish": [
       {
