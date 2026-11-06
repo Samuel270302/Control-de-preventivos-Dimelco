@@ -99,7 +99,7 @@ export default function PlanMpPage() {
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "flex-start" }}>
+      <div className="cabecera-pagina">
         <div style={{ flex: 1 }}>
           <h1>Plan de mantenimiento preventivo</h1>
           <p className="subtitulo">

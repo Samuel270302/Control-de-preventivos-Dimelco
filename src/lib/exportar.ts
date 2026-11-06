@@ -15,11 +15,18 @@ async function descargar(buf: ArrayBuffer, nombre: string) {
   const blob = new Blob([buf], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
+  // Navegador: el enlace va dentro de la página y el nombre sin acentos; con acentos
+  // Chrome puede descartar el nombre y guardar el archivo como "download".
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = nombre;
+  a.download = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 1000);
 }
 
 const COLOR_ESTADO: Record<string, string> = {

@@ -1,0 +1,64 @@
+name: Web para Chrome y celular
+
+# Publica la app como sitio web en GitHub Pages (https://samuel270302.github.io/Control-de-preventivos-Hemco/).
+# La conexión a Supabase va fija en la compilación. La URL del proyecto y la llave anon son
+# públicas por diseño de Supabase: la llave anon queda de todos modos dentro de la página
+# publicada y, sin usuario y contraseña, las políticas de la base no entregan datos.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ['docs/**', 'tools/**', 'tests/**', 'supabase/**', '**.md', 'electron/**', 'build/**', '.github/workflows/instalador.yml', '.github/workflows/mantenimiento.yml', '.github/workflows/reporte_semanal.yml']
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      # Mientras GitHub Pages no esté activado (Settings > Pages > Source: GitHub Actions),
+      # el flujo avisa y no publica, sin marcar error.
+      - name: Verificar GitHub Pages
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" --jq .build_type 2>/dev/null | grep -q workflow; then
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::No se publica: active Settings > Pages > Build and deployment > Source: GitHub Actions"
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.pages.outputs.listo == 'si'
+        uses: actions/checkout@v4
+      - if: steps.pages.outputs.listo == 'si'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - if: steps.pages.outputs.listo == 'si'
+        run: npm ci --no-audit --no-fund
+      - name: Compilar sitio
+        if: steps.pages.outputs.listo == 'si'
+        env:
+          VITE_SUPABASE_URL: https://ltgsfgcmznausdotbyqk.supabase.co
+          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0Z3NmZ2Ntem5hdXNkb3RieXFrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ5NTgsImV4cCI6MjEwODcxMDk1OH0.0pevE3uWkU4Abw2I3SRuqpTEqaB0k0rSJlKX43YzNY4
+        run: npm run build:web
+      - if: steps.pages.outputs.listo == 'si'
+        uses: actions/configure-pages@v5
+      - if: steps.pages.outputs.listo == 'si'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist-web
+      - id: despliegue
+        if: steps.pages.outputs.listo == 'si'
+        uses: actions/deploy-pages@v4

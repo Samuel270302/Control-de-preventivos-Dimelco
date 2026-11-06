@@ -24,7 +24,7 @@ export default function ControlPm() {
   const filas = todas.filter((f) => (f.seccion ?? 0) === seccion);
   return (
     <>
-      <div style={{ display: "flex", alignItems: "flex-start" }}>
+      <div className="cabecera-pagina">
         <div style={{ flex: 1 }}>
           <h1>Control y proyección de mantenimientos preventivos</h1>
           <p className="subtitulo">{unidad ?? "Todas las unidades"} · PM mayor por horómetro · al {fFecha(hoyISO())}</p>

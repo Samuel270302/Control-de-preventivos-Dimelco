@@ -523,3 +523,128 @@ dialog.dialogo-ancho { width: min(1100px, 94vw); }
 .selector-unidad span { display: block; font-size: 11px; color: #9f9f9f; margin-bottom: 4px; letter-spacing: 0.03em; }
 .selector-unidad select { width: 100%; background: #2f2f2f; color: #f2f2f2; border: 1px solid #4a4a4a; border-radius: 6px; padding: 6px 8px; font-size: 13px; }
 .unidad-fija { padding: 12px 16px; border-bottom: 1px solid #3a3a3a; color: var(--ambar); font-weight: 600; font-size: 13px; }
+
+.cabecera-pagina { display: flex; align-items: flex-start; gap: 12px; }
+.cabecera-pagina > div:first-child { flex: 1; min-width: 0; }
+
+/* ===== Celular (menos de 768 px): versión web en el navegador. El escritorio no cambia. ===== */
+.cabecera-movil, .barra-inferior, .velo-menu { display: none; }
+@media (max-width: 767px) {
+  body { font-size: 15px; }
+  input, select, textarea { font-size: 16px; } /* evita el zoom automático al escribir */
+  .app { flex-direction: column; height: 100dvh; }
+  .cabecera-movil {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--oscuro);
+    color: #ffffff;
+    padding: 8px 14px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .cabecera-movil .logo-app { width: 26px; height: 26px; }
+  .cabecera-movil span:nth-child(2) { flex: 1; }
+  .contenido { padding: 12px 12px 84px; }
+  h1 { font-size: 18px; }
+  .subtitulo { font-size: 13px; }
+
+  /* Menú lateral convertido en panel que abre "Más" */
+  .menu.menu-movil {
+    position: fixed;
+    top: 0;
+    bottom: 64px;
+    left: 0;
+    width: min(320px, 86vw);
+    z-index: 40;
+    transform: translateX(-105%);
+    transition: transform 0.18s ease;
+    overflow-y: auto;
+  }
+  .menu.menu-movil.abierto { transform: none; box-shadow: 4px 0 18px rgba(0, 0, 0, 0.3); }
+  .menu.menu-movil nav { overflow: visible; }
+  .menu.menu-movil nav a { padding: 12px 14px; font-size: 15px; }
+  .velo-menu { display: block; position: fixed; inset: 0 0 64px 0; background: rgba(0, 0, 0, 0.35); z-index: 35; }
+  .barra-inferior {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 64px;
+    background: var(--oscuro);
+    z-index: 45;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .barra-inferior a, .barra-inferior button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: #cfcfcf;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    font-size: 11.5px;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 0;
+    min-height: 0;
+  }
+  .barra-inferior svg { width: 22px; height: 22px; }
+  .barra-inferior .activo { color: var(--ambar); }
+  .avisos { bottom: 76px; left: 10px; right: 10px; max-width: none; }
+
+  /* Encabezados, filtros y formularios */
+  .cabecera-pagina { flex-direction: column; gap: 8px; }
+  .cabecera-pagina > button { width: 100%; }
+  .barra-acciones { gap: 8px; }
+  .barra-acciones > * { max-width: 100%; }
+  .barra-acciones input[type="search"], .barra-acciones input:not([type]) { flex: 1; min-width: 0; }
+  button { min-height: 40px; }
+  .pestanias { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .pestania { white-space: nowrap; flex-shrink: 0; }
+  .resumen, .resumen-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .chip .n { font-size: 22px; }
+  .fila-campos { flex-direction: column; gap: 0; }
+  .fila-campos label.campo { max-width: none !important; margin-bottom: 10px; }
+  .fila-campos > div { align-self: stretch !important; }
+  .fila-campos > div > button, .fila-campos > button { width: 100%; }
+  dialog { width: calc(100vw - 20px); max-width: none; max-height: calc(100dvh - 30px); padding: 16px; margin: auto; }
+  dialog .barra-acciones button { flex: 1; }
+
+  /* Lecturas: barra de fecha, turno y Grabar fija arriba; cada horómetro es una tarjeta */
+  .panel-grabar { position: sticky; top: -12px; z-index: 5; padding: 10px 12px; }
+  .panel-grabar .fila-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .panel-grabar .fila-campos label.campo { margin-bottom: 8px; }
+  .panel-grabar .fila-campos > div { grid-column: 1 / -1; }
+  .tabla-lecturas thead { display: none; }
+  .tabla-lecturas, .tabla-lecturas tbody { display: block; }
+  .tabla-lecturas tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2px 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--borde);
+  }
+  .tabla-lecturas td { display: block; padding: 0; border: none; white-space: normal; text-align: left; }
+  .tabla-lecturas .c-equipo { font-weight: 600; }
+  .tabla-lecturas .c-horo { text-align: right; color: var(--texto-suave); }
+  .tabla-lecturas .c-ultima::before { content: "Última: "; color: var(--texto-suave); }
+  .tabla-lecturas .c-fecha { text-align: right; color: var(--texto-suave); font-size: 13px; }
+  .tabla-lecturas .c-nueva, .tabla-lecturas .c-control { grid-column: 1 / -1; }
+  .tabla-lecturas .c-nueva input { width: 100% !important; min-height: 42px; margin-top: 4px; }
+  .tabla-lecturas .c-control:empty { display: none; }
+  .tabla-lecturas tr.fila-con-valor { background: var(--ambar-suave); }
+  .tabla-lecturas tr td { background: transparent !important; }
+
+  /* Tablas anchas: se desplazan de lado dentro de su marco */
+  .tabla-marco { -webkit-overflow-scrolling: touch; }
+  .rejilla-graficas, .fila-tablas-ficha { grid-template-columns: 1fr; }
+  .rejilla-ficha { grid-template-columns: 1fr; }
+  .calendario { grid-template-columns: repeat(7, 128px); overflow-x: auto; padding-bottom: 4px; }
+  .pantalla-centro { padding: 12px; }
+  .tarjeta { width: 100%; }
+}

@@ -1,12 +1,13 @@
 {
   "name": "preventivos-hemco",
   "productName": "Control de Preventivos - Dimelco",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "Control de mantenimiento preventivo por horómetros",
   "private": true,
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
+    "build:web": "tsc -b && vite build --mode web",
     "build": "tsc -b && vite build && esbuild electron/main.ts electron/preload.ts --bundle --platform=node --external:electron --outdir=dist-electron",
     "app": "npm run build && electron .",
     "dist": "npm run build && electron-builder --win nsis --publish never",

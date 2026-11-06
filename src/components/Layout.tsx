@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useEsMovil } from "../lib/movil";
 import { useAuth } from "../auth";
 import { supabase } from "../lib/supabase";
 import { useEstadoConexion } from "../lib/conexion";
@@ -16,6 +17,7 @@ import {
   IconoHistorial,
   IconoIndicadores,
   IconoLlave,
+  IconoMas,
   IconoPlanilla,
   IconoPrograma,
   IconoReinicio,
@@ -37,6 +39,14 @@ const enlaces = [
   { a: "/historial", texto: "Historial", icono: <IconoHistorial />, captura: false },
 ];
 
+// Título de la cabecera en el celular.
+function tituloDe(ruta: string) {
+  const e = [...enlaces, ...enlacesAdmin].find((x) => ruta.startsWith(x.a));
+  if (e) return e.texto;
+  if (ruta.startsWith("/equipo/")) return "Ficha del equipo";
+  return "Control de Preventivos";
+}
+
 const NOMBRE_ROL = { admin: "Administrador", capturador: "Capturador", invitado: "Invitado (solo consulta)" };
 
 const enlacesAdmin = [
@@ -53,6 +63,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [cambiandoClave, setCambiandoClave] = useState(false);
   const [guardandoClave, setGuardandoClave] = useState(false);
   const { avisar } = useAvisos();
+  const esMovil = useEsMovil();
+  const { pathname } = useLocation();
+  const [masAbierto, setMasAbierto] = useState(false);
+  useEffect(() => setMasAbierto(false), [pathname]);
+  // Barra inferior del celular: quien captura tiene Lecturas y Registro PM; el invitado,
+  // Programa e Indicadores. El resto del menú queda en "Más".
+  const barra = (puedeCapturar ? ["/control", "/lecturas", "/registro-pm"] : ["/control", "/programa", "/indicadores"])
+    .map((a) => enlaces.find((e) => e.a === a)!);
+  const CORTO: Record<string, string> = { "Registro PM": "PM", "Programa 4 semanas": "Programa" };
 
   async function cambiarClave(contrasena: string) {
     setGuardandoClave(true);
@@ -89,7 +108,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           onCerrar={() => setCambiandoClave(false)}
         />
       )}
-      <aside className="menu">
+      {esMovil && (
+        <header className="cabecera-movil">
+          <img className="logo-app" src={logoApp} alt="" />
+          <span>{tituloDe(pathname)}</span>
+          <span className={`punto-conexion ${conexion}`} title={conexion === "en_linea" ? "En línea" : "Sin conexión"} />
+        </header>
+      )}
+      {esMovil && masAbierto && <div className="velo-menu" onClick={() => setMasAbierto(false)} />}
+      <aside className={`menu${esMovil ? " menu-movil" : ""}${masAbierto ? " abierto" : ""}`} aria-hidden={esMovil && !masAbierto}>
         <div className="logo">
           <img className="logo-app" src={logoApp} alt="" />
           <div>
@@ -135,6 +162,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </aside>
+      {esMovil && (
+        <nav className="barra-inferior" aria-label="Navegación principal">
+          {barra.map((e) => (
+            <NavLink key={e.a} to={e.a} onClick={(ev) => alNavegar(ev, e.a)} className={({ isActive }) => (isActive ? "activo" : "")}>
+              {e.icono}
+              <span>{CORTO[e.texto] ?? e.texto}</span>
+            </NavLink>
+          ))}
+          <button className={masAbierto ? "activo" : ""} onClick={() => setMasAbierto((x) => !x)} aria-expanded={masAbierto}>
+            <IconoMas />
+            <span>Más</span>
+          </button>
+        </nav>
+      )}
       <main className="contenido">
         <AvisoActualizacion />
         {children}

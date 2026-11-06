@@ -167,7 +167,7 @@ export default function Lecturas() {
       <p className="subtitulo">
         Se escribe lo que marca el contador al cierre del turno, nunca horas acumuladas.
       </p>
-      <div className="panel-formulario">
+      <div className="panel-formulario panel-grabar">
         <div className="fila-campos">
           <label className="campo" style={{ maxWidth: 170 }}>
             <span>Fecha</span>
@@ -188,7 +188,7 @@ export default function Lecturas() {
         </div>
       </div>
       <div className="tabla-marco">
-        <table>
+        <table className="tabla-lecturas">
           <thead>
             <tr>
               <th>Equipo</th>
@@ -208,20 +208,22 @@ export default function Lecturas() {
               const res = validacionDe(comp.id);
               return (
                 <tr key={comp.id} className={texto.trim() !== "" ? "fila-con-valor" : ""}>
-                  <td>{equipo}</td>
-                  <td>{comp.tipo_horometro}</td>
-                  <td className="num">{u ? fNum(u.lectura) : "Sin lecturas"}</td>
-                  <td>{u ? `${fFecha(u.fecha)} ${u.turno}` : ""}</td>
-                  <td className="num">
+                  <td className="c-equipo">{equipo}</td>
+                  <td className="c-horo">{comp.tipo_horometro}</td>
+                  <td className="num c-ultima">{u ? fNum(u.lectura) : "Sin lecturas"}</td>
+                  <td className="c-fecha">{u ? `${fFecha(u.fecha)} ${u.turno}` : ""}</td>
+                  <td className="num c-nueva">
                     <input
                       className="casilla-lectura"
+                      inputMode="decimal"
+                      aria-label={`Nueva lectura ${equipo} ${comp.tipo_horometro}`}
                       style={{ width: 110, textAlign: "right" }}
                       value={texto}
                       onKeyDown={siguienteCasilla}
                       onChange={(e) => setCapturas({ ...capturas, [comp.id]: e.target.value })}
                     />
                   </td>
-                  <td>
+                  <td className="c-control">
                     {res === "validando" ? (
                       <span className="nota">Validando…</span>
                     ) : (

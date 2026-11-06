@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
-import { borrarConexion } from "../lib/config";
+import { borrarConexion, conexionFija } from "../lib/config";
 import logo from "../assets/logo-dimelco.png";
 import logoApp from "../assets/logo-app.svg";
 
@@ -44,17 +44,19 @@ export default function Login() {
         <button style={{ marginTop: 10, width: "100%" }} disabled={cargando}>
           {cargando ? "Entrando…" : "Entrar"}
         </button>
-        <button
-          type="button"
-          className="boton-plano"
-          style={{ marginTop: 10, width: "100%" }}
-          onClick={() => {
-            borrarConexion();
-            location.reload();
-          }}
-        >
-          Cambiar conexión a la base
-        </button>
+        {!conexionFija && (
+          <button
+            type="button"
+            className="boton-plano"
+            style={{ marginTop: 10, width: "100%" }}
+            onClick={() => {
+              borrarConexion();
+              location.reload();
+            }}
+          >
+            Cambiar conexión a la base
+          </button>
+        )}
         <img className="logo-login" src={logo} alt="Dimelco" />
       </form>
     </div>
