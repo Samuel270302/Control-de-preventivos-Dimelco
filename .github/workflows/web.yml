@@ -1,6 +1,6 @@
 name: Web para Chrome y celular
 
-# Publica la app como sitio web en GitHub Pages (https://samuel270302.github.io/Control-de-preventivos-Hemco/).
+# Publica la app como sitio web en GitHub Pages (https://samuel270302.github.io/Control-de-preventivos-Dimelco/).
 # La conexión a Supabase va fija en la compilación. La URL del proyecto y la llave anon son
 # públicas por diseño de Supabase: la llave anon queda de todos modos dentro de la página
 # publicada y, sin usuario y contraseña, las políticas de la base no entregan datos.

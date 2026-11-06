@@ -24,7 +24,7 @@ const resultados = [];
 // Servidor estático del sitio compilado, en una subcarpeta como en GitHub Pages.
 const TIPOS = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".png": "image/png",
   ".svg": "image/svg+xml", ".webmanifest": "application/manifest+json", ".woff2": "font/woff2" };
-const BASE = "/Control-de-preventivos-Hemco/";
+const BASE = "/Control-de-preventivos-Dimelco/";
 const servidor = createServer((req, res) => {
   let ruta = decodeURIComponent(new URL(req.url, "http://x").pathname);
   if (!ruta.startsWith(BASE)) { res.writeHead(404); return res.end(); }

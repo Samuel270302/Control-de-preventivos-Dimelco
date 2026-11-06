@@ -26,7 +26,7 @@ El flujo necesita el secreto SUPABASE_DB_URL en Settings, Secrets and variables,
 
 ## Versión web (Chrome en PC y celular)
 
-Dirección: https://samuel270302.github.io/Control-de-preventivos-Hemco/ con el mismo usuario y contraseña que la app de escritorio. Se publica sola con cada cambio de la app en `main` (flujo "Web para Chrome y celular"). La conexión a la base va fija: no se configura.
+Dirección: https://samuel270302.github.io/Control-de-preventivos-Dimelco/ con el mismo usuario y contraseña que la app de escritorio. Se publica sola con cada cambio de la app en `main` (flujo "Web para Chrome y celular"). La conexión a la base va fija: no se configura.
 
 - En PC se ve igual que la app de escritorio. Exportar a Excel descarga el archivo en Descargas; el Reporte semanal abre la ventana de imprimir de Chrome ("Guardar como PDF").
 - En celular (menos de 768 px de ancho) el menú pasa a una barra inferior: Control PM, Lecturas y PM para quien captura; Control PM, Programa e Indicadores para el invitado; el resto del menú, la unidad, la contraseña y Cerrar sesión están en Más. En Lecturas cada horómetro es una tarjeta y la barra de fecha, turno y Grabar lecturas queda fija arriba.

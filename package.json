@@ -1,7 +1,7 @@
 {
   "name": "preventivos-hemco",
   "productName": "Control de Preventivos - Dimelco",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "description": "Control de mantenimiento preventivo por horómetros",
   "private": true,
   "main": "dist-electron/main.js",
@@ -56,7 +56,7 @@
       {
         "provider": "github",
         "owner": "Samuel270302",
-        "repo": "Control-de-preventivos-Hemco"
+        "repo": "Control-de-preventivos-Dimelco"
       }
     ]
   }
