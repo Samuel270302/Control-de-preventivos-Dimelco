@@ -203,7 +203,7 @@ await win.locator("dialog[open] input").nth(0).fill("ClaveNueva2026");
 await win.locator("dialog[open] input").nth(1).fill("ClaveNueva2026");
 await foto("19_cambiar_contrasena");
 await win.getByRole("button", { name: "Cancelar" }).click();
-await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send("actualizacion-lista", "0.5.4"));
+await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.send("actualizacion-lista", "0.6.1"));
 await win.waitForTimeout(400);
 await foto("20_actualizacion", win.locator(".aviso-actualizacion"));
 await foto("21_menu", win.locator(".menu"));
