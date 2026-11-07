@@ -15131,6 +15131,7 @@ var import_electron = require("electron");
 var import_promises = require("node:fs/promises");
 var import_node_path = __toESM(require("node:path"));
 var import_electron_updater = __toESM(require_main2());
+import_electron.app.setPath("userData", import_node_path.default.join(import_electron.app.getPath("appData"), "Preventivos HEMCO"));
 import_electron.ipcMain.handle("guardar-pdf", async (evento, html, nombre) => {
   const padre = import_electron.BrowserWindow.fromWebContents(evento.sender) ?? void 0;
   const opciones = {
@@ -15176,7 +15177,7 @@ function createWindow() {
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: "#111518",
-    title: "Preventivos HEMCO",
+    title: "Control de Preventivos - Dimelco",
     icon: import_node_path.default.join(__dirname, "../dist/icono.png"),
     webPreferences: {
       preload: import_node_path.default.join(__dirname, "preload.js"),
@@ -15197,7 +15198,7 @@ function createWindow() {
       buttons: ["Salir sin grabar", "Seguir capturando"],
       defaultId: 1,
       cancelId: 1,
-      title: "Preventivos HEMCO",
+      title: "Control de Preventivos - Dimelco",
       message: "Hay lecturas sin grabar",
       detail: "Si cierras la app, las lecturas escritas y no grabadas se pierden."
     });
