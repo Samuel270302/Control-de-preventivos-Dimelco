@@ -158,6 +158,8 @@ export interface Perfil {
   rol: "admin" | "capturador" | "invitado";
   activo: boolean;
   unidad_id: string | null;
+  // Unidades que ve un capturador o invitado (app 0.6.0); el admin las ve todas.
+  unidades?: string[] | null;
 }
 
 export interface CumplimientoPm {

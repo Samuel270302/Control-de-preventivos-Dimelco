@@ -19,12 +19,13 @@ const TABLAS = ["v_control_pm", "v_control_40", "equipos", "componentes", "plane
 const resultados = [];
 
 function filtrarUnidad(datos, unidad) {
-  datos.equipos = datos.equipos.filter((e) => e.unidad_id === unidad);
+  const lista = [].concat(unidad);
+  datos.equipos = datos.equipos.filter((e) => lista.includes(e.unidad_id));
   const eqs = new Set(datos.equipos.map((e) => e.id));
   datos.componentes = datos.componentes.filter((c) => eqs.has(c.equipo_id));
   const comps = new Set(datos.componentes.map((c) => c.id));
   for (const t of ["v_control_pm", "v_control_40", "v_cumplimiento_pm", "v_utilizacion_mensual"])
-    datos[t] = datos[t].filter((f) => f.unidad_id === unidad);
+    datos[t] = datos[t].filter((f) => lista.includes(f.unidad_id));
   for (const t of ["v_lecturas", "registros_pm", "v_registros_pm", "cambios_horometro", "v_ultima_lectura"])
     datos[t] = datos[t].filter((f) => comps.has(f.componente_id));
 }
@@ -34,10 +35,11 @@ async function probar(caso) {
   const unidad = (n) => datos.unidades.find((u) => u.nombre === n).id;
   const r = (nombre, cond, detalle = "") => resultados.push({ caso, nombre, ok: !!cond, detalle });
   const esAdmin = caso === "admin";
-  const propia = esAdmin ? null : unidad("Explotec");
+  const varias = caso === "capturador_varias";
+  const propias = esAdmin ? [] : varias ? [unidad("HEMCO"), unidad("Explotec")] : [unidad("Explotec")];
   datos.perfiles = datos.perfiles.map((p) => ({ ...p, nombre: esAdmin ? p.nombre : "Planeador Explotec",
-    rol: esAdmin ? "admin" : "capturador", activo: true, unidad_id: propia }));
-  if (!esAdmin) filtrarUnidad(datos, propia);
+    rol: esAdmin ? "admin" : "capturador", activo: true, unidad_id: propias[0] ?? null, unidades: propias }));
+  if (!esAdmin) filtrarUnidad(datos, propias);
 
   const app = await _electron.launch({ executablePath: join(RAIZ, "node_modules/electron/dist/electron"),
     args: [join(RAIZ, "dist-electron/main.js"), "--no-sandbox", "--lang=es-419"], cwd: RAIZ });
@@ -122,6 +124,22 @@ async function probar(caso) {
     r("Todas: el maestro muestra la columna Unidad", (await win.locator("thead th", { hasText: "Unidad" }).count()) === 1);
     await win.reload(); await win.waitForTimeout(2000);
     r("La elección de unidad se recuerda al reabrir", (await win.locator(".selector-unidad select").inputValue()) === "");
+  } else if (varias) {
+    const opciones = await win.locator(".selector-unidad option").allTextContents();
+    r("Varias unidades: selector con Mis unidades, HEMCO y Explotec", JSON.stringify(opciones) === JSON.stringify(["Mis unidades", "HEMCO", "Explotec"]), opciones.join(", "));
+    await win.locator(".selector-unidad select").selectOption({ index: 0 }); await win.waitForTimeout(400);
+    await ir("#/control");
+    const ambas = await equiposControl();
+    r("Varias unidades: Mis unidades muestra HEMCO y Explotec, sin Veta Nueva",
+      ambas.includes("Boltec #1") && ambas.includes("B1-37") && !ambas.includes("PS009"), `${ambas.length} equipos`);
+    await win.screenshot({ path: join(SALIDA, "u_capturador_varias.png") });
+    await win.locator(".selector-unidad select").selectOption({ label: "HEMCO" }); await win.waitForTimeout(600);
+    const soloH = await equiposControl();
+    r("Varias unidades: al elegir HEMCO quedan solo sus equipos", soloH.length > 0 && !soloH.some((c) => c.startsWith("B1-")), `${soloH.length} equipos`);
+    await ir("#/lecturas");
+    const filasH = await win.locator("tbody tr").count();
+    r("Varias unidades: Lecturas de HEMCO solamente", filasH > 0 && (await win.locator("tbody tr", { hasText: "B1-37" }).count()) === 0, `${filasH}`);
+    await win.locator(".selector-unidad select").selectOption({ index: 0 }); await win.waitForTimeout(300);
   } else {
     r("Capturador: sin selector, con su unidad fija", (await win.locator(".selector-unidad").count()) === 0 &&
       ((await win.locator(".unidad-fija").textContent()) ?? "").includes("Explotec"));
@@ -146,5 +164,6 @@ async function probar(caso) {
 
 await probar("admin");
 await probar("capturador_explotec");
+await probar("capturador_varias");
 for (const x of resultados) console.log(`${x.ok ? "OK   " : "FALLA"} [${x.caso}] ${x.nombre}${x.detalle ? " · " + x.detalle : ""}`);
 console.log(`\n${resultados.filter((x) => x.ok).length}/${resultados.length} verificaciones OK`);

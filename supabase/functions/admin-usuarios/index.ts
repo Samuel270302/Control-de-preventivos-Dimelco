@@ -53,11 +53,13 @@ Deno.serve(async (req) => {
     const correo = String(datos.correo ?? "").trim().toLowerCase();
     const nombre = String(datos.nombre ?? "").trim();
     const rol = String(datos.rol ?? "");
-    const unidad = rol === "admin" ? null : String(datos.unidad_id ?? "") || null;
+    // Unidades que verá el usuario: lista "unidades" (app 0.6.0) o "unidad_id" (versiones anteriores).
+    const lista = Array.isArray(datos.unidades) ? datos.unidades : datos.unidad_id ? [datos.unidad_id] : [];
+    const unidades = rol === "admin" ? [] : [...new Set(lista.map((u: unknown) => String(u ?? "")).filter(Boolean))];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) return falla("Correo inválido");
     if (!nombre) return falla("El nombre es obligatorio");
     if (!ROLES.includes(rol)) return falla("Rol inválido");
-    if (rol !== "admin" && !unidad) return falla("Elija la unidad del usuario");
+    if (rol !== "admin" && unidades.length === 0) return falla("Marque al menos una unidad para el usuario");
 
     const { data: creado, error } = await servicio.auth.admin.createUser({
       email: correo,
@@ -74,7 +76,7 @@ Deno.serve(async (req) => {
     // crear_perfil deja el perfil como invitado inactivo; aquí se fija lo pedido.
     const { error: errPerfil } = await servicio
       .from("perfiles")
-      .update({ nombre, rol, activo: true, unidad_id: unidad })
+      .update({ nombre, rol, activo: true, unidades })
       .eq("user_id", creado.user.id);
     if (errPerfil) return falla(`Usuario creado, pero el perfil no se actualizó: ${errPerfil.message}`, 500);
     return respuesta({ ok: true, user_id: creado.user.id });

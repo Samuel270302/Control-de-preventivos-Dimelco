@@ -52,8 +52,10 @@ async function probarRol(rol) {
     motivo_anulacion: "Lectura duplicada por error de digitación", anulado_por: "00000000-0000-0000-0000-000000000001",
     anulado_en: "2026-10-20T15:30:00Z" }];
   const HEMCO = datos.unidades.find((u) => u.nombre === "HEMCO").id;
-  datos.perfiles = datos.perfiles.map((p) =>
-    rol === "inactivo" ? { ...p, rol: "invitado", activo: false, unidad_id: null }
+  // El usuario de la sesión toma el rol de la prueba; Martha queda como capturadora de HEMCO.
+  datos.perfiles = datos.perfiles.map((p) => p.user_id !== "00000000-0000-0000-0000-000000000001"
+    ? { ...p, unidad_id: HEMCO, unidades: [HEMCO] }
+    : rol === "inactivo" ? { ...p, rol: "invitado", activo: false, unidad_id: null }
       : { ...p, rol, activo: true, unidad_id: rol === "admin" ? null : HEMCO });
   // Seguridad por unidad simulada: capturador e invitado de HEMCO reciben solo HEMCO.
   if (rol === "capturador" || rol === "invitado") filtrarUnidad(datos, HEMCO);
@@ -275,15 +277,34 @@ async function probarRol(rol) {
     await win.locator('label:has-text("Nuevo usuario: nombre") input').fill("Planeador turno B");
     await win.locator('label:has-text("Correo") input').fill("planeador.b@grupodimelco.com");
     r("0.5.0: alta bloqueada sin unidad", await win.getByRole("button", { name: "Crear usuario" }).isDisabled());
-    await win.locator('.panel-formulario label:has-text("Unidad") select').selectOption({ label: "HEMCO" });
+    await win.locator('.panel-formulario summary[aria-label="Unidades del nuevo usuario"]').click(); await win.waitForTimeout(200);
+    const casillasAlta = win.locator('.panel-formulario .lista-unidades label');
+    r("0.6.0: alta con una casilla por unidad", (await casillasAlta.count()) === 4, (await casillasAlta.allTextContents()).join(", "));
+    await casillasAlta.filter({ hasText: "HEMCO" }).locator("input").check();
+    await casillasAlta.filter({ hasText: "Explotec" }).locator("input").check();
+    r("0.6.0: el resumen muestra las unidades marcadas", ((await win.locator('.panel-formulario summary[aria-label="Unidades del nuevo usuario"]').textContent()) ?? "").trim() === "HEMCO, Explotec");
+    await win.locator("h1").click(); await win.waitForTimeout(200);
     await win.locator('label:has-text("Contraseña inicial") input').fill("Clave1234");
     await win.screenshot({ path: join(SALIDA, "f7_usuarios.png") });
     await win.getByRole("button", { name: "Crear usuario" }).click(); await win.waitForTimeout(800);
     const alta = escrituras.find((e) => e.startsWith("FUNC") && e.includes('"crear"')) ?? "";
-    r("F7: alta de usuario llama a la función con los datos", alta.includes("planeador.b@grupodimelco.com") && alta.includes('"rol":"capturador"') && alta.includes(`"unidad_id":"${HEMCO}"`), alta.slice(0, 120));
+    r("F7: alta de usuario llama a la función con los datos", alta.includes("planeador.b@grupodimelco.com") && alta.includes('"rol":"capturador"') && alta.includes(`"unidades":["${HEMCO}","${datos.unidades.find((u) => u.nombre === "Explotec").id}"]`), alta.slice(0, 200));
     r("F7: el formulario se limpia tras crear", (await win.locator('label:has-text("Correo") input').inputValue()) === "");
     r("Usuarios: el rol propio no se puede cambiar", await win.locator("tbody tr", { hasText: "demo@grupodimelco.com" }).locator("select").first().isDisabled());
     const filaMartha = win.locator("tbody tr", { hasText: "planeador.martha@grupodimelco.com" });
+    await filaMartha.locator("summary").click(); await win.waitForTimeout(200);
+    const antesUnid = cuerpos.length;
+    // Los datos simulados no guardan el cambio: se revisa lo que la app envía a la base.
+    await filaMartha.locator(".lista-unidades label", { hasText: "Veta Nueva" }).locator("input").click(); await win.waitForTimeout(600);
+    const cambioUnid = cuerpos.slice(antesUnid).find((c) => c.metodo === "PATCH" && c.tabla === "perfiles")?.cuerpo ?? "";
+    r("0.6.0: marcar Veta Nueva en la tabla guarda la lista de unidades", cambioUnid.includes('"unidades":[') &&
+      cambioUnid.includes(datos.unidades.find((u) => u.nombre === "Veta Nueva").id) && cambioUnid.includes(HEMCO), cambioUnid.slice(0, 160));
+    const antesQuitar = cuerpos.length;
+    await filaMartha.locator(".lista-unidades label", { hasText: "HEMCO" }).locator("input").click(); await win.waitForTimeout(600);
+    r("0.6.0: no deja a una capturadora activa sin unidades", !cuerpos.slice(antesQuitar).some((c) => c.tabla === "perfiles") &&
+      ((await win.locator(".aviso").last().textContent()) ?? "").includes("al menos una unidad"));
+    await win.screenshot({ path: join(SALIDA, "u_usuarios_casillas.png") });
+    await filaMartha.locator("summary").click(); await win.waitForTimeout(200);
     await filaMartha.getByRole("button", { name: "Restablecer contraseña" }).click(); await win.waitForTimeout(300);
     const dlgR = win.locator("dialog[open]");
     await dlgR.locator("input").nth(0).fill("ClaveNueva99"); await dlgR.locator("input").nth(1).fill("ClaveNueva99");

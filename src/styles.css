@@ -648,3 +648,46 @@ dialog.dialogo-ancho { width: min(1100px, 94vw); }
   .pantalla-centro { padding: 12px; }
   .tarjeta { width: 100%; }
 }
+
+/* Casillas de unidades (Usuarios) */
+.casillas-unidades { position: relative; min-width: 150px; }
+.casillas-unidades summary {
+  list-style: none;
+  cursor: pointer;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  padding: 7px 28px 7px 10px;
+  background: var(--panel);
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 230px;
+}
+.casillas-unidades summary::-webkit-details-marker { display: none; }
+.casillas-unidades summary::after { content: "▾"; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--texto-suave); }
+.casillas-unidades summary.vacio { color: var(--texto-suave); }
+.casillas-unidades[open] summary { border-color: var(--ambar); }
+.casillas-unidades.deshabilitado { border: 1px solid var(--borde); border-radius: 6px; padding: 7px 10px; color: var(--texto-suave); background: var(--panel-2); }
+.lista-unidades {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  padding: 6px 4px;
+}
+.lista-unidades .campo-check { display: flex; align-items: center; gap: 8px; padding: 6px 10px; margin: 0; white-space: nowrap; cursor: pointer; border-radius: 5px; }
+.lista-unidades .campo-check:hover { background: var(--ambar-suave); }
+.casillas-unidades.en-linea .lista-unidades { position: static; box-shadow: none; margin-top: 4px; }
+div.campo { display: block; }
+div.campo > span { display: block; font-size: 12px; color: var(--texto-suave); margin-bottom: 4px; }
+.fila-campos div.campo { flex: 1; min-width: 140px; }
+.lista-unidades .campo-check { justify-content: flex-start; font-size: 13px; }
+.lista-unidades input[type="checkbox"] { width: 16px; height: 16px; padding: 0; margin: 0; flex: none; accent-color: var(--ambar); }
+.tabla-usuarios td select { min-width: 150px; }
+@media (max-width: 767px) { .fila-campos div.campo { max-width: none !important; margin-bottom: 10px; } }

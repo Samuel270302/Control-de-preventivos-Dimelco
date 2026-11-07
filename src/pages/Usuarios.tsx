@@ -7,9 +7,10 @@ import { useAvisos } from "../components/Avisos";
 import { gestionarUsuario } from "../lib/usuarios";
 import DialogoContrasena, { MIN_CONTRASENA } from "../components/DialogoContrasena";
 import type { Perfil } from "../lib/types";
-import { useUnidades } from "../lib/unidad";
+import { unidadesDe, useUnidades } from "../lib/unidad";
+import CasillasUnidades from "../components/CasillasUnidades";
 
-const NUEVO = { nombre: "", correo: "", rol: "capturador", unidad_id: "", contrasena: "" };
+const NUEVO = { nombre: "", correo: "", rol: "capturador", unidades: [] as string[], contrasena: "" };
 
 export default function Usuarios() {
   const qc = useQueryClient();
@@ -47,8 +48,8 @@ export default function Usuarios() {
       valor,
     }: {
       user_id: string;
-      campo: "rol" | "activo" | "nombre" | "unidad_id";
-      valor: string | boolean | null;
+      campo: "rol" | "activo" | "nombre" | "unidades";
+      valor: string | boolean | string[] | null;
     }) => {
       const { error } = await supabase()
         .from("perfiles")
@@ -60,7 +61,7 @@ export default function Usuarios() {
     onError: (e: Error) =>
       avisar(
         e.message.includes("perfiles_unidad_requerida")
-          ? "Asigne una unidad antes de activar a un capturador o invitado"
+          ? "Un capturador o invitado activo debe tener al menos una unidad marcada"
           : e.message,
         "error"
       ),
@@ -68,7 +69,8 @@ export default function Usuarios() {
 
   const nuevoValido =
     nuevo.nombre.trim() !== "" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevo.correo.trim()) && nuevo.contrasena.length >= MIN_CONTRASENA &&
-    (nuevo.rol === "admin" || nuevo.unidad_id !== "");
+    (nuevo.rol === "admin" || nuevo.unidades.length > 0);
+  const activas = (unidades ?? []).filter((u) => u.activo);
 
   return (
     <>
@@ -86,7 +88,7 @@ export default function Usuarios() {
       <p className="subtitulo">
         Un usuario inactivo no puede usar la app. El registro abierto está cerrado: las cuentas nuevas se crean aquí.
       </p>
-      <div className="panel-formulario" style={{ maxWidth: 980 }}>
+      <div className="panel-formulario" style={{ maxWidth: 1180 }}>
         <div className="fila-campos">
           <label className="campo" style={{ maxWidth: 200 }}>
             <span>Nuevo usuario: nombre</span>
@@ -104,19 +106,17 @@ export default function Usuarios() {
               <option value="admin">Administrador</option>
             </select>
           </label>
-          <label className="campo" style={{ maxWidth: 170 }}>
-            <span>Unidad</span>
-            <select
-              value={nuevo.rol === "admin" ? "" : nuevo.unidad_id}
-              disabled={nuevo.rol === "admin"}
-              onChange={(e) => setNuevo({ ...nuevo, unidad_id: e.target.value })}
-            >
-              <option value="">{nuevo.rol === "admin" ? "Todas" : "Seleccione"}</option>
-              {(unidades ?? []).map((u) => (
-                <option key={u.id} value={u.id}>{u.nombre}</option>
-              ))}
-            </select>
-          </label>
+          <div className="campo" style={{ maxWidth: 200 }}>
+            <span>Unidades que ve</span>
+            <CasillasUnidades
+              etiqueta="Unidades del nuevo usuario"
+              unidades={activas}
+              valor={nuevo.rol === "admin" ? [] : nuevo.unidades}
+              deshabilitado={nuevo.rol === "admin"}
+              textoTodas="Todas"
+              onCambio={(ids) => setNuevo({ ...nuevo, unidades: ids })}
+            />
+          </div>
           <label className="campo" style={{ maxWidth: 180 }}>
             <span>Contraseña inicial</span>
             <input
@@ -134,14 +134,14 @@ export default function Usuarios() {
           </div>
         </div>
       </div>
-      <div className="tabla-marco" style={{ maxWidth: 980 }}>
-        <table>
+      <div className="tabla-marco" style={{ maxWidth: 1180 }}>
+        <table className="tabla-usuarios">
           <thead>
             <tr>
               <th>Nombre</th>
               <th>Correo</th>
               <th>Rol</th>
-              <th>Unidad</th>
+              <th>Unidades que ve</th>
               <th>Activo</th>
               <th></th>
             </tr>
@@ -174,16 +174,21 @@ export default function Usuarios() {
                   </select>
                 </td>
                 <td>
-                  <select
-                    value={p.unidad_id ?? ""}
-                    disabled={p.rol === "admin"}
-                    onChange={(e) => actualizar.mutate({ user_id: p.user_id, campo: "unidad_id", valor: e.target.value || null })}
-                  >
-                    <option value="">{p.rol === "admin" ? "Todas" : "Sin unidad"}</option>
-                    {(unidades ?? []).map((u) => (
-                      <option key={u.id} value={u.id}>{u.nombre}</option>
-                    ))}
-                  </select>
+                  <CasillasUnidades
+                    etiqueta={`Unidades de ${p.nombre}`}
+                    enLinea
+                    unidades={activas}
+                    valor={unidadesDe(p)}
+                    deshabilitado={p.rol === "admin"}
+                    textoTodas="Todas"
+                    onCambio={(ids) => {
+                      if (ids.length === 0 && p.activo) {
+                        avisar("Un capturador o invitado activo debe tener al menos una unidad marcada", "error");
+                        return;
+                      }
+                      actualizar.mutate({ user_id: p.user_id, campo: "unidades", valor: ids });
+                    }}
+                  />
                 </td>
                 <td>
                   <button
